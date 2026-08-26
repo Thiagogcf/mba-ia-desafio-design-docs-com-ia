@@ -104,7 +104,8 @@ Deixar o cliente deduplicar comparando `order_id` + `to_status` + `timestamp`.
 - **Cria uma dependência de documentação.** A garantia só funciona se estiver claramente comunicada;
   o item virou compromisso do PM no portal do desenvolvedor ([09:26] Marcos).
 - **Duplicidade pode chegar com horas de distância.** Com a escada de retry de até ~14h36min
-  ([ADR-003](./ADR-003-retry-com-backoff-exponencial-e-dlq.md)) e replay manual sem prazo, a janela
+  ([ADR-003](./ADR-003-retry-com-backoff-exponencial-e-dlq.md)) e replay manual sem prazo definido
+  (⇢ *derivado*: a reunião definiu o replay manual em [09:18] Diego, não um prazo), a janela
   de deduplicação do cliente não pode ser curta — o que precisa ser dito explicitamente na
   documentação.
 - **Sem ordenação global** ([ADR-002](./ADR-002-worker-em-processo-separado-com-polling.md)), a

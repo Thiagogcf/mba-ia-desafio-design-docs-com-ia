@@ -40,7 +40,8 @@ Adotamos o **padrão Outbox sobre o MySQL já existente**.
 - **A falha ao inserir na outbox aborta a mudança de status.** Não pode existir o caso de o status
   mudar e o evento não sair ([09:40] Bruno; [09:41] Diego).
 - A outbox mora no **MySQL existente**, sem infraestrutura adicional ([09:07] Diego).
-- A tabela é indexada por **status** (`PENDING`, `PROCESSING`, `FAILED`, `DELIVERED`) e por
+- A tabela é indexada por **status** (`PENDING`, `PROCESSING`, `FAILED`, `DELIVERED`, mais o estado
+  terminal `DEAD_LETTERED` derivado em [`docs/FDD.md`](../FDD.md#4-modelo-de-dados)) e por
   **`created_at`**; o worker lê apenas os pendentes, em batch pequeno ([09:08] Diego).
 - **A filtragem de assinantes acontece na inserção, não no envio.** Se nenhum webhook ativo do
   customer assina aquele status, a linha nem é criada — economiza linha na tabela ([09:34] Bruno,

@@ -126,7 +126,7 @@ model WebhookEndpoint {
   secret                  String    @db.VarChar(128)
   previousSecret          String?   @db.VarChar(128)
   previousSecretExpiresAt DateTime?
-  secretRotatedAt         DateTime?
+  secretRotatedAt         DateTime?   // proposta: quando a última rotação ocorreu
   subscribedStatuses      Json      // OrderStatus[]  — filtro de eventos do endpoint
   active                  Boolean   @default(true)
   createdAt               DateTime  @default(now())
@@ -212,15 +212,23 @@ model WebhookDeadLetter {
   ("aguardando retry" e "morto") e a linha dead-lettered voltaria a casar com a query do worker a
   cada ciclo. *(Regra derivada: a reunião decidiu a DLQ em tabela separada ([09:18] Diego), mas não
   tratou o estado residual da linha de origem.)*
-- **Relações declaradas nos dois lados.** O Prisma exige o campo inverso: `WebhookEndpoint` declara
-  `outboxEvents WebhookOutbox[]` e `WebhookOutbox` declara `deliveries WebhookDelivery[]`, seguindo o
-  padrão de `Order.items` ↔ `OrderItem.order` em `prisma/schema.prisma`. `WebhookDeadLetter` é a
-  única exceção deliberada: guarda `outboxEventId` e `webhookEndpointId` como colunas escalares, sem
-  relação, justamente para sobreviver como evidência independente do ciclo de vida da outbox.
+- **Relações declaradas nos dois lados.** O Prisma exige o campo inverso, então `WebhookEndpoint`
+  declara `outboxEvents WebhookOutbox[]` e `WebhookOutbox` declara `deliveries WebhookDelivery[]`,
+  seguindo o padrão de `Order.items` ↔ `OrderItem.order` em `prisma/schema.prisma`. O inverso em
+  `Customer` (`webhookEndpoints WebhookEndpoint[]`) está em 10.8, junto das demais alterações no
+  schema existente. **Duas colunas ficam deliberadamente escalares, sem relação:**
+  `WebhookDelivery.webhookEndpointId` — indexada e usada para consultar o histórico em 6.6, mas sem
+  relação porque o caminho canônico até o endpoint já existe via `outboxEvent` — e o
+  `WebhookDeadLetter` inteiro, que guarda `outboxEventId` e `webhookEndpointId` como colunas soltas
+  justamente para sobreviver como evidência independente do ciclo de vida da outbox.
 - **Índices.** Diego especificou índice no campo de status e em `created_at` ([09:08]). O índice do
   caminho quente é composto — `(status, nextAttemptAt)` — porque a query do worker precisa filtrar
   também eventos em espera de retry ([09:17] Diego); `createdAt` fica indexado isoladamente para
   ordenação e para a varredura de arquivamento futura (Q4 do [RFC](./RFC.md#5-questões-em-aberto)).
+- **`secretRotatedAt` é proposta desta especificação** ⇢ *derivado*. A reunião definiu a rotação com
+  grace de 24 h ([09:21] Sofia), sem falar em registrar quando ela ocorreu. A coluna existe porque
+  `previousSecretExpiresAt` deixa de ser informativo assim que a janela fecha, e o cliente precisa
+  conseguir ver quando rotacionou pela última vez. É devolvida em 6.1, 6.2, 6.3 e 6.5.
 - **UUID como padrão de identificador.** Larissa fechou "UUID, segue o padrão do resto do projeto"
   ([09:51]). No schema atual, todos os modelos de domínio — `User`, `Customer`, `Product`, `Order`,
   `OrderItem`, `OrderStatusHistory` — usam `@id @default(uuid()) @db.Char(36)`. A única exceção é
@@ -273,13 +281,15 @@ publishWebhookEvent(tx, order, fromStatus, toStatus, requestId?):
                     where: { customerId: order.customerId, active: true } })
   2. assinantes ← endpoints.filter(e => e.subscribedStatuses.includes(toStatus))
   3. se assinantes.length === 0 → return          // não insere nada  [09:34] Bruno
-  4. payload ← renderEventPayload(order, fromStatus, toStatus)        // snapshot  [09:52]
-  5. bytes ← Buffer.byteLength(JSON.stringify(payload))
-     se bytes > 65536 → throw WebhookPayloadTooLargeError             // 64 KB  [09:24]
-  6. para cada assinante:
-       tx.webhookOutbox.create({
-         webhookEndpointId, orderId, eventType: 'order.status_changed',
-         payload, status: PENDING, attempts: 0, nextAttemptAt: now(), requestId })
+  4. para cada assinante:
+       a. eventId ← uuidv4()                     // um id por LINHA da outbox  [09:25] Diego
+       b. payload ← renderEventPayload(eventId, order, fromStatus, toStatus)   // snapshot [09:52]
+       c. bytes ← Buffer.byteLength(JSON.stringify(payload))
+          se bytes > 65536 → throw WebhookPayloadTooLargeError                 // 64 KB [09:24]
+       d. tx.webhookOutbox.create({
+            id: eventId,                          // event_id === webhook_outbox.id
+            webhookEndpointId, orderId, eventType: 'order.status_changed',
+            payload, status: PENDING, attempts: 0, nextAttemptAt: now(), requestId })
 ```
 
 **Pontos críticos deste fluxo:**
@@ -287,6 +297,15 @@ publishWebhookEvent(tx, order, fromStatus, toStatus, requestId?):
 - **Filtragem na inserção, não no envio.** Se nenhum webhook ativo do customer assina aquele status,
   a linha nem é criada — "economiza linha na tabela" ([09:34] Bruno; concordado por Diego). O efeito
   colateral é que **não existe backfill**: um webhook criado depois não recebe eventos passados.
+- **O `event_id` nasce por linha da outbox, dentro do laço — não antes dele.** Diego definiu o
+  identificador como "um UUID gerado quando o evento entra na outbox... único por evento"
+  ([09:25]), e cada linha é uma entrada na outbox. Gerar o id **fora** do laço faria dois endpoints
+  do mesmo customer receberem o **mesmo** `X-Event-Id`: o cliente que deduplica por esse header —
+  exatamente o que [ADR-005](./adrs/ADR-005-entrega-at-least-once-com-x-event-id.md) exige dele —
+  descartaria a segunda entrega como duplicata, e o evento se perderia em silêncio. Com o id por
+  linha, `event_id === webhook_outbox.id`, e o `X-Webhook-Id` pedido por Sofia ([09:44]) diz a qual
+  cadastro cada entrega pertence. É por isso que o payload é renderizado **dentro** do laço: ele
+  carrega o `event_id`.
 - **Qualquer exceção aqui aborta a mudança de status.** É o requisito explícito: "se a outbox falhar
   de inserir, rollback. Não pode ter caso de status mudar e evento não sair" ([09:40] Bruno;
   "essencial", [09:41] Diego).
@@ -323,7 +342,8 @@ loop a cada 2 000 ms:                                   [09:09] Diego
      d. headers ← buildHeaders(evento, endpoint, corpo)  // ver 6.8
      e. resposta ← fetch(endpoint.url, { method: 'POST', headers, body: corpo,
                                           signal: AbortSignal.timeout(10_000) })   [09:42]
-     f. registra WebhookDelivery (attempt, outcome, httpStatus, durationMs, responseBody truncado)
+     f. registra WebhookDelivery com `attempt = evento.attempts + 1` (número do **envio**, começando
+        em 1), outcome, httpStatus, durationMs e responseBody truncado
      g. 2xx  → status = DELIVERED
         senão → aplica política de retry (5.3)
 ```
@@ -395,13 +415,15 @@ sem depender de anular `nextAttemptAt` (a coluna é obrigatória, ver seção 4)
 consultável, "evidence pra debug e reprocessamento" ([09:18] Diego).
 
 > **Por que a linha continua existindo na outbox.**
-> [ADR-003](./adrs/ADR-003-retry-com-backoff-exponencial-e-dlq.md) descartou usar a própria outbox
-> como DLQ porque isso "polui a leitura da outbox principal, que é o caminho quente do worker"
-> ([09:18] Diego). O estado terminal preserva esse benefício: `DEAD_LETTERED` sai do índice de
-> trabalho `(status, nextAttemptAt)` para efeito da query e a linha vira **tombstone**, mantendo a
-> integridade referencial do histórico de entregas (`webhook_deliveries.outboxEventId`) e permitindo
-> que o replay reative o mesmo `event_id`. O custo — payload duplicado entre outbox e DLQ — já está
-> registrado como consequência negativa na própria ADR-003.
+> [ADR-003](./adrs/ADR-003-retry-com-backoff-exponencial-e-dlq.md) escolheu a tabela separada
+> porque, nas palavras de Diego, ela é "mais limpa a leitura da outbox principal, e fica como
+> evidence pra debug e reprocessamento" ([09:18]). O estado terminal preserva esse benefício onde
+> ele importa: `DEAD_LETTERED` fica fora da query de trabalho do worker, então a leitura quente
+> continua limpa. A linha permanece como **tombstone** — não é apagada — para manter a integridade
+> referencial do histórico de entregas (`webhook_deliveries.outboxEventId`) e permitir que o replay
+> reative o mesmo `event_id`. O custo, payload duplicado entre outbox e DLQ, já está registrado como
+> consequência negativa na própria ADR-003. *(Que a linha vire tombstone em vez de ser apagada é
+> ⇢ derivado: a reunião decidiu a tabela separada, não o destino da linha de origem.)*
 
 **Replay** (`POST /api/v1/admin/webhooks/dead-letter/:id/replay`, contrato em 6.7):
 
@@ -429,6 +451,7 @@ replay(deadLetterId, adminUserId):
 
 ```
 rotate(webhookId):
+  0. se endpoint.active === false → WEBHOOK_INACTIVE
   1. se endpoint.previousSecretExpiresAt > now() → WEBHOOK_ROTATION_IN_PROGRESS   (ver Q8 do RFC)
   2. novaSecret ← 'whsec_' + randomBytes(32).toString('base64url')     // formato: proposta, ver nota
   3. update: { previousSecret: secretAtual,
@@ -500,6 +523,7 @@ Content-Type: application/json
   "subscribedStatuses": ["SHIPPED", "DELIVERED"],
   "active": true,
   "secret": "whsec_9tK2Yb7Qm1xV0pL4sR8wZaC3nE6hJ5uD",
+  "secretRotatedAt": null,
   "createdAt": "2026-08-26T13:04:11.482Z",
   "updatedAt": "2026-08-26T13:04:11.482Z"
 }
@@ -576,6 +600,7 @@ Content-Type: application/json
   "url": "https://hooks.atlascomercial.com.br/oms/orders",
   "subscribedStatuses": ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"],
   "active": true,
+  "secretRotatedAt": null,
   "createdAt": "2026-08-26T13:04:11.482Z",
   "updatedAt": "2026-08-26T15:22:07.109Z"
 }
@@ -641,6 +666,7 @@ Authorization: Bearer <jwt>
 | `200` | Secret rotacionada; a anterior permanece aceita até `previousSecretExpiresAt` |
 | `401` | `UNAUTHORIZED` |
 | `404` | `WEBHOOK_NOT_FOUND` |
+| `409` | `WEBHOOK_INACTIVE` — rotação sobre endpoint desativado |
 | `409` | `WEBHOOK_ROTATION_IN_PROGRESS` — já existe janela de grace aberta (**proposta**, pendente da questão Q8 do [RFC](./RFC.md#5-questões-em-aberto)) |
 
 **Semântica:** durante as 24 h seguintes, todo envio para este endpoint carrega **duas assinaturas**
@@ -762,7 +788,9 @@ semântica assíncrona.)*
 | `409` | `WEBHOOK_ALREADY_REPLAYED` |
 
 **Semântica:** o `X-Event-Id` é preservado no reenvio, permitindo deduplicação do lado do cliente
-([09:25] Diego). A autoria do replay é gravada em `webhook_dead_letter.replayedById` e emitida em
+([09:25] Diego). O objeto `replayedBy` **não é uma coluna**: `webhook_dead_letter` persiste apenas
+`replayedById`, e o `email` vem de uma consulta a `users` na montagem da resposta — a tabela não
+declara relação, pela decisão de mantê-la independente (seção 4). A autoria do replay é gravada em `webhook_dead_letter.replayedById` e emitida em
 log estruturado, atendendo à exigência de auditoria de Sofia ([09:36]).
 
 ### 6.8 Contrato outbound — o request que **nós** enviamos ao cliente
@@ -874,7 +902,7 @@ seguindo exatamente o desenho de `InvalidStatusTransitionError` e `InsufficientS
 | --- | --- | --- | --- | --- | --- |
 | `WEBHOOK_NOT_FOUND` | 404 | `WebhookNotFoundError` | `AppError` (404) † | `:id` de webhook inexistente em `PATCH`, `DELETE`, `GET /deliveries` ou rotação | — |
 | `WEBHOOK_INVALID_URL` | 400 | `WebhookInvalidUrlError` | `BadRequestError` | URL malformada ou com esquema diferente de `https` | `{ url, reason }` |
-| `WEBHOOK_SECRET_REQUIRED` | 400 | `WebhookSecretRequiredError` | `BadRequestError` | Operação que exige secret ativa sobre endpoint sem secret válida | `{ webhookId }` |
+| `WEBHOOK_SECRET_REQUIRED` | 400 | `WebhookSecretRequiredError` | `BadRequestError` | **Reservado, sem gatilho nesta fase** — a coluna `secret` é obrigatória e sempre preenchida. Ganha uso se a Q6 do [RFC](./RFC.md#5-questões-em-aberto) levar a secret cifrada, quando a decifração pode falhar. Nomeado por Bruno ([09:28]) | `{ webhookId }` |
 | `WEBHOOK_INVALID_EVENT_FILTER` | 400 | `WebhookInvalidEventFilterError` | `BadRequestError` | `subscribedStatuses` vazio ou com valor fora do enum `OrderStatus` | `{ invalidStatuses, allowed }` |
 | `WEBHOOK_INACTIVE` | 409 | `WebhookInactiveError` | `ConflictError` | Rotação de secret sobre endpoint com `active = false` | `{ webhookId }` |
 | `WEBHOOK_ROTATION_IN_PROGRESS` | 409 | `WebhookRotationInProgressError` | `ConflictError` | Nova rotação com janela de grace ainda aberta (**proposta — Q8 do [RFC](./RFC.md#5-questões-em-aberto)**) | `{ previousSecretExpiresAt }` |
@@ -1146,7 +1174,7 @@ Consequências para o módulo de webhooks:
 
 - `subscribedStatuses` só aceita valores do enum `OrderStatus` de `prisma/schema.prisma`; qualquer
   outro valor produz `WEBHOOK_INVALID_EVENT_FILTER` (7.1).
-- O exemplo dado por Marcos — "só quero saber quando vira SHIPPED e DELIVERED" ([09:34]) — é um
+- O exemplo dado por Marcos — "só quero saber quando vira SHIPPED e DELIVERED" ([09:33]) — é um
   filtro sobre `to_status`, e é assim que a filtragem de 5.1 funciona.
 - Como `canTransition` já rejeita transições inválidas **antes** da publicação, nenhum evento
   impossível chega à outbox.
@@ -1264,7 +1292,12 @@ async function bootstrap(): Promise<void> {
   const timer = setInterval(() => {
     if (running) return;
     running = true;
-    void processor.tick().finally(() => { running = false; });
+    // sem o .catch, uma rejeição (MySQL fora, bug no fetch) vira unhandled rejection e
+    // o Node >= 20 derruba o processo — exatamente o risco RT-2, silencioso.
+    void processor
+      .tick()
+      .catch((err) => logger.error({ err }, 'webhook_worker_cycle_failed'))
+      .finally(() => { running = false; });
   }, env.WEBHOOK_WORKER_POLL_INTERVAL_MS);
 
   const shutdown = async (signal: string): Promise<void> => {
@@ -1276,7 +1309,14 @@ async function bootstrap(): Promise<void> {
   };
   process.on('SIGINT',  () => void shutdown('SIGINT'));
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
+  logger.info({ pollIntervalMs: env.WEBHOOK_WORKER_POLL_INTERVAL_MS }, 'worker_started');
 }
+
+// mesmo fecho de src/server.ts
+bootstrap().catch((err) => {
+  logger.fatal({ err }, 'bootstrap_failed');
+  process.exit(1);
+});
 ```
 
 E o script correspondente em `package.json`, no mesmo formato dos existentes ([09:11] Larissa):
@@ -1390,8 +1430,9 @@ da API ([09:30] Bruno).
 - [ ] `tests/orders.test.ts` continua passando **sem alteração**.
 - [ ] O payload gravado é um **snapshot**: alterar o pedido depois da inserção não muda o conteúdo da
       linha da outbox ([09:52] Larissa).
-- [ ] Payload renderizado acima de 64 KB produz `WEBHOOK_PAYLOAD_TOO_LARGE` e aborta a transação
-      ([09:24] Larissa).
+- [ ] Payload renderizado acima de 64 KB produz `WEBHOOK_PAYLOAD_TOO_LARGE` ⇢ *derivado*: a fala
+      sustenta "erro, não truncamento" ([09:24] Larissa); que o erro **aborte a transação** é
+      consequência de ADR-001 + ADR-007 (ver 5.1) e está na pauta da revisão técnica.
 
 ### 12.2 Worker e entrega
 

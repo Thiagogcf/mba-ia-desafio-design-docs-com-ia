@@ -21,7 +21,7 @@ documento.
 
 Alguns itens não são citação direta, mas **consequência necessária** de uma decisão que foi tomada —
 ou detalhes de especificação que a reunião não fechou. Eles aparecem com o marcador
-**`⇢ derivado`** no resumo, e a coluna *Localização* aponta para a decisão-mãe. São **25 itens**,
+**`⇢ derivado`** no resumo, e a coluna *Localização* aponta para a decisão-mãe. São **31 itens**,
 **todos** listados em [Itens derivados](#itens-derivados) ao final, com a justificativa de por que
 não são citação literal. Nenhum item do pacote está sem origem, e a contagem é verificada
 automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
@@ -46,7 +46,7 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | PRD-PERS-04 | docs/PRD.md | Restrição | O JWT atual representa o usuário operador do sistema, não o cliente | TRANSCRICAO | `[09:32] Bruno` |
 | PRD-PERS-05 | docs/PRD.md | Público-alvo | Administrador (`ADMIN`) reprocessa eventos com falha permanente | TRANSCRICAO | `[09:36] Sofia` |
 | PRD-PERS-06 | docs/PRD.md | Público-alvo | PM documenta a integração no portal do desenvolvedor | TRANSCRICAO | `[09:40] Marcos` |
-| PRD-UC-01 | docs/PRD.md | Cenário de uso | Cliente assina só `SHIPPED` e `DELIVERED` para acompanhar envio | TRANSCRICAO | `[09:34] Marcos` |
+| PRD-UC-01 | docs/PRD.md | Cenário de uso | Cliente assina só `SHIPPED` e `DELIVERED` para acompanhar envio | TRANSCRICAO | `[09:33] Marcos` |
 | PRD-UC-02 | docs/PRD.md | Cenário de uso | Rotação de secret após suspeita de vazamento (já ocorreu com cliente real) | TRANSCRICAO | `[09:22] Diego` |
 | PRD-UC-03 | docs/PRD.md | Cenário de uso | Cliente em manutenção planejada de duas horas volta a receber sem intervenção | TRANSCRICAO | `[09:16] Diego` |
 | PRD-UC-04 | docs/PRD.md | Cenário de uso | Investigação de "não recebi o evento" via histórico de entregas | TRANSCRICAO | `[09:34] Marcos` |
@@ -206,7 +206,7 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | RFC-ALT-02 | docs/RFC.md | Alternativa descartada | Síncrono também não tem rollback aceitável se o cliente estiver fora do ar | TRANSCRICAO | `[09:04] Bruno` |
 | RFC-ALT-03 | docs/RFC.md | Alternativa descartada | Diego encerra: "síncrono está fora de questão" | TRANSCRICAO | `[09:06] Diego` |
 | RFC-ALT-04 | docs/RFC.md | Alternativa descartada | Redis Streams — exigiria subir mais infraestrutura | TRANSCRICAO | `[09:07] Larissa` |
-| RFC-ALT-05 | docs/RFC.md | Trade-off | Redis é overengineering para o time; outbox no MySQL resolve | TRANSCRICAO | `[09:07] Diego` |
+| RFC-ALT-05 | docs/RFC.md | Trade-off | "Subir Redis Cluster pra isso é overengineering" — a razão dada é o time pequeno | TRANSCRICAO | `[09:07] Diego` |
 | RFC-ALT-06 | docs/RFC.md | Alternativa descartada | Trigger de banco para ser mais reativo | TRANSCRICAO | `[09:09] Bruno` |
 | RFC-ALT-07 | docs/RFC.md | Trade-off | Trigger só executa SQL e não notifica processo externo; MySQL sem `NOTIFY`/`LISTEN` | TRANSCRICAO | `[09:09] Diego` |
 | RFC-ALT-08 | docs/RFC.md | Alternativa descartada | Exactly-once — exigiria coordenação dos dois lados | TRANSCRICAO | `[09:25] Diego` |
@@ -239,12 +239,24 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | --- | --- | --- | --- | --- | --- |
 | RFC-IMP-01 | docs/RFC.md | Impacto | Alteração única em código de domínio: o `changeStatus` | CODIGO | `src/modules/orders/order.service.ts` |
 | RFC-IMP-02 | docs/RFC.md | Impacto | Registro do módulo exige alterar a fiação de controllers e o router | CODIGO | `src/app.ts` |
-| RFC-IMP-03 | docs/RFC.md | Impacto | Error middleware, validate, auth e logger consumidos sem alteração | TRANSCRICAO | `[09:29] Bruno` |
+| RFC-IMP-03 | docs/RFC.md | Impacto | Error middleware, `validate` e `authenticate` consumidos sem alteração | TRANSCRICAO | `[09:29] Bruno` |
+| RFC-IMP-09 | docs/RFC.md | Impacto | O logger exige uma alteração pontual obrigatória em `redactPaths` | CODIGO | `src/shared/logger/index.ts` |
 | RFC-IMP-04 | docs/RFC.md | Impacto | Novas tabelas no schema; nenhuma tabela existente é alterada | CODIGO | `prisma/schema.prisma` |
 | RFC-IMP-05 | docs/RFC.md | Impacto | Duas pools de conexão contra o mesmo MySQL (API + worker) | TRANSCRICAO | `[09:30] Bruno` |
 | RFC-IMP-06 | docs/RFC.md | Impacto | Novo artefato de deploy operado pelo time | TRANSCRICAO | `[09:11] Diego` |
 | RFC-IMP-07 | docs/RFC.md | Impacto | Contrato público com garantia at-least-once, exigindo dedup no cliente | TRANSCRICAO | `[09:24] Diego` |
 | RFC-IMP-08 | docs/RFC.md | Impacto | Cronograma de 3 sprints com a revisão de segurança ao final | TRANSCRICAO | `[09:47] Larissa` |
+
+### 2.5 Riscos de arquitetura
+
+| ID | Documento | Tipo | Conteúdo (resumo) | Fonte | Localização |
+| --- | --- | --- | --- | --- | --- |
+| RFC-RISK-01 | docs/RFC.md | Risco | Transação de `changeStatus` mais longa e com novo modo de falha | TRANSCRICAO | `[09:04] Bruno` |
+| RFC-RISK-02 | docs/RFC.md | Risco | Instância única do worker é ponto único de parada, com sintoma silencioso | TRANSCRICAO | `[09:12] Diego` |
+| RFC-RISK-03 | docs/RFC.md | Risco | Outbox cresce sem limite enquanto o arquivamento estiver fora de escopo | TRANSCRICAO | `[09:08] Diego` |
+| RFC-RISK-04 | docs/RFC.md | Risco | SLA de 10 s não fecha no pior caso: 2 s de polling + 10 s de timeout | TRANSCRICAO | `[09:42] Diego` |
+| RFC-RISK-05 | docs/RFC.md | Risco | Secret precisa ficar recuperável em claro para recomputar o HMAC | TRANSCRICAO | `[09:21] Bruno` |
+| RFC-RISK-06 | docs/RFC.md | Restrição | Cada risco de arquitetura aponta a decisão que reabre, se materializar | TRANSCRICAO | `[09:50] Larissa` |
 
 ---
 
@@ -284,6 +296,7 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | FDD-MODEL-14 | docs/FDD.md | Modelagem | Estado terminal `DEAD_LETTERED` para a linha de origem sair da fila de trabalho ⇢ derivado | TRANSCRICAO | `[09:18] Diego` |
 | FDD-MODEL-15 | docs/FDD.md | Restrição | Relações declaradas nos dois lados, como exige o Prisma e como faz o schema atual | CODIGO | `prisma/schema.prisma` |
 | FDD-MODEL-16 | docs/FDD.md | Restrição | UUID é o padrão das entidades; `OrderNumberSequence` usa `id` inteiro | CODIGO | `prisma/schema.prisma` |
+| FDD-MODEL-17 | docs/FDD.md | Proposta | Coluna `secretRotatedAt`, para o cliente saber quando rotacionou pela última vez ⇢ derivado | TRANSCRICAO | `[09:21] Sofia` |
 
 ### 3.3 Fluxos
 
@@ -309,6 +322,8 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | FDD-FLUXO-18 | docs/FDD.md | Restrição | Passadas as 24 h, a secret antiga morre | TRANSCRICAO | `[09:21] Sofia` |
 | FDD-FLUXO-19 | docs/FDD.md | Restrição | Limite de 64 KB avaliado **dentro da transação**, propagando erro para `changeStatus` ⇢ derivado | TRANSCRICAO | `[09:24] Larissa` |
 | FDD-FLUXO-20 | docs/FDD.md | Fluxo | Guarda de reentrada: um ciclo lento não pode sobrepor o seguinte, senão a ordenação se perde ⇢ derivado | TRANSCRICAO | `[09:12] Diego` |
+| FDD-FLUXO-21 | docs/FDD.md | Fluxo | Linha de origem vira tombstone `DEAD_LETTERED` em vez de ser apagada ⇢ derivado | TRANSCRICAO | `[09:18] Diego` |
+| FDD-FLUXO-22 | docs/FDD.md | Fluxo | `event_id` gerado por linha da outbox, dentro do laço de fan-out | TRANSCRICAO | `[09:25] Diego` |
 
 ### 3.4 Contratos públicos
 
@@ -356,9 +371,9 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | FDD-ERRO-08 | docs/FDD.md | Erro | `WEBHOOK_DEAD_LETTER_NOT_FOUND` — replay de id inexistente ⇢ derivado | TRANSCRICAO | `[09:35] Diego` |
 | FDD-ERRO-09 | docs/FDD.md | Erro | `WEBHOOK_ALREADY_REPLAYED` — replay de item já reprocessado ⇢ derivado | TRANSCRICAO | `[09:18] Diego` |
 | FDD-ERRO-10 | docs/FDD.md | Erro | `WEBHOOK_ROTATION_IN_PROGRESS` — proposta ligada à questão em aberto Q8 ⇢ derivado | TRANSCRICAO | `[09:21] Sofia` |
-| FDD-ERRO-11 | docs/FDD.md | Erro (worker) | `WEBHOOK_DELIVERY_TIMEOUT` — sem resposta em 10 s | TRANSCRICAO | `[09:42] Diego` |
-| FDD-ERRO-12 | docs/FDD.md | Erro (worker) | `WEBHOOK_DELIVERY_FAILED` — resposta não-2xx | TRANSCRICAO | `[09:15] Diego` |
-| FDD-ERRO-13 | docs/FDD.md | Erro (worker) | `WEBHOOK_RETRIES_EXHAUSTED` — 5ª retentativa falhou | TRANSCRICAO | `[09:15] Diego` |
+| FDD-ERRO-11 | docs/FDD.md | Erro (worker) | `WEBHOOK_DELIVERY_TIMEOUT` — sem resposta em 10 s; o **nome** do código é derivado do prefixo `WEBHOOK_` ⇢ derivado | TRANSCRICAO | `[09:42] Diego` |
+| FDD-ERRO-12 | docs/FDD.md | Erro (worker) | `WEBHOOK_DELIVERY_FAILED` — resposta não-2xx; o **nome** do código é derivado do prefixo `WEBHOOK_` ⇢ derivado | TRANSCRICAO | `[09:15] Diego` |
+| FDD-ERRO-13 | docs/FDD.md | Erro (worker) | `WEBHOOK_RETRIES_EXHAUSTED` — 5ª retentativa falhou; o **nome** do código é derivado do prefixo `WEBHOOK_` ⇢ derivado | TRANSCRICAO | `[09:15] Diego` |
 | FDD-ERRO-14 | docs/FDD.md | Restrição | Erros novos herdam de `AppError`, como `InsufficientStockError` | TRANSCRICAO | `[09:28] Bruno` |
 | FDD-ERRO-15 | docs/FDD.md | Restrição | Padrão real das classes de erro do projeto | CODIGO | `src/shared/errors/http-errors.ts` |
 | FDD-ERRO-16 | docs/FDD.md | Restrição | `AppError` com statusCode, errorCode e details | CODIGO | `src/shared/errors/app-error.ts` |
@@ -401,7 +416,7 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | FDD-OBS-12 | docs/FDD.md | Métrica | `webhook_events_per_endpoint_per_minute` — insumo para decidir rate limiting | TRANSCRICAO | `[09:38] Diego` |
 | FDD-OBS-13 | docs/FDD.md | Tracing | Correlação por `X-Request-Id` já gerado e propagado pelo middleware existente | CODIGO | `src/middlewares/request-logger.middleware.ts` |
 | FDD-OBS-14 | docs/FDD.md | Tracing | Sem biblioteca de tracing distribuído no projeto; nada novo será adicionado | CODIGO | `package.json` |
-| FDD-OBS-15 | docs/FDD.md | Tracing | Correlação por `requestId` exige `changeStatus` e o controller repassarem `req.id` ⇢ derivado | CODIGO | `src/modules/orders/order.controller.ts` |
+| FDD-OBS-15 | docs/FDD.md | Tracing | Correlação por `requestId` exige `changeStatus` e o controller repassarem `req.id` ⇢ derivado | TRANSCRICAO | `[09:36] Sofia` |
 
 ### 3.8 Integração com o sistema existente
 
@@ -509,6 +524,7 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | ADR-006-COD | docs/adrs/ADR-006-reuso-dos-padroes-existentes-do-projeto.md | Restrição | Estrutura de módulo espelhada do módulo de pedidos | CODIGO | `src/modules/orders/order.routes.ts` |
 | ADR-007 | docs/adrs/ADR-007-snapshot-do-payload-na-insercao-da-outbox.md | Decisão | Payload renderizado e gravado como snapshot na inserção | TRANSCRICAO | `[09:52] Larissa` |
 | ADR-007-Q | docs/adrs/ADR-007-snapshot-do-payload-na-insercao-da-outbox.md | Contexto | Pergunta original: payload renderizado ou só `order_id`? | TRANSCRICAO | `[09:51] Bruno` |
+| ADR-007-PRAZO | docs/adrs/ADR-007-snapshot-do-payload-na-insercao-da-outbox.md | Restrição | Replay é manual e, por consequência, sem prazo definido ⇢ derivado | TRANSCRICAO | `[09:18] Diego` |
 | ADR-007-COD | docs/adrs/ADR-007-snapshot-do-payload-na-insercao-da-outbox.md | Restrição | Pedido pode ser apagado enquanto `PENDING`/`CANCELLED`, o que quebraria a renderização tardia | CODIGO | `src/modules/orders/order.service.ts` |
 
 ---
@@ -548,6 +564,12 @@ cobre **todos** eles.
 | FDD-INTEG-29 | `OrderService.create` não publica evento | `[09:12] Larissa` (a discussão é sobre mudança de status) | Publicar na criação seria escopo inventado |
 | FDD-DEP-08 | `WEBHOOK_WORKER_BATCH_SIZE` = 50 | `[09:08] Diego` ("batch pequeno") | Nenhum número foi fechado; 50 é ponto de partida declarado como calibrável |
 | FDD-RT-09 | Risco de evento travado em `PROCESSING` | `[09:11] Diego` (processo separado pode reiniciar) | Mesma origem de FDD-FLUXO-11, registrada como risco |
+| FDD-MODEL-17 | Coluna `secretRotatedAt` | `[09:21] Sofia` (rotação com grace de 24 h) | A reunião não falou em registrar quando a rotação ocorreu; `previousSecretExpiresAt` some quando a janela fecha |
+| FDD-FLUXO-21 | Linha de origem vira tombstone em vez de ser apagada | `[09:18] Diego` (DLQ em tabela separada) | A reunião decidiu para onde o evento morto vai, não o destino da linha na outbox; o tombstone preserva o histórico de entregas e o replay |
+| FDD-ERRO-11 | Nome `WEBHOOK_DELIVERY_TIMEOUT` | `[09:42] Diego` (timeout de 10 s) + `[09:29] Larissa` (prefixo) | A regra foi decidida; o nome do código segue a convenção de prefixo |
+| FDD-ERRO-12 | Nome `WEBHOOK_DELIVERY_FAILED` | `[09:15] Diego` (falha entra em retry) + `[09:29] Larissa` | idem |
+| FDD-ERRO-13 | Nome `WEBHOOK_RETRIES_EXHAUSTED` | `[09:15] Diego` (teto de tentativas move para DLQ) + `[09:29] Larissa` | idem |
+| ADR-007-PRAZO | Replay sem prazo definido | `[09:18] Diego` (replay manual via endpoint admin) | A fala estabelece o mecanismo manual; a ausência de prazo é a consequência |
 | PRD-FR-13 | Efeito do estado inativo sobre eventos novos | `[09:21] Bruno` (coluna "estado ativo") | A fala sustenta a coluna; que endpoint inativo deixe de receber eventos é a consequência |
 
 ### Itens da reunião deliberadamente **não** registrados como requisito
@@ -574,9 +596,9 @@ Números conferidos automaticamente por [`scripts/validate-docs.sh`](../scripts/
 
 | Métrica | Valor | Exigência do desafio |
 | --- | --- | --- |
-| Linhas de rastreabilidade | **361** | — |
-| Fonte = `TRANSCRICAO` | **290** (80%) | ≥ 70% |
+| Linhas de rastreabilidade | **372** | — |
+| Fonte = `TRANSCRICAO` | **301** (80%) | ≥ 70% |
 | Fonte = `CODIGO` | **71** (19%) | ≥ 5 linhas |
 | Linhas sem *Localização* | **0** | — |
-| Itens marcados `⇢ derivado` | **25** — todos listados em [Itens derivados](#itens-derivados) | — |
-| Citações `[hh:mm] Nome` validadas contra a transcrição | **100%** | — |
+| Itens marcados `⇢ derivado` | **31** — todos listados em [Itens derivados](#itens-derivados) | — |
+| Pares `[hh:mm] Nome` existentes na transcrição | **82 de 82** — existência verificada por script; **fidelidade do conteúdo verificada por leitura**, não pelo script | — |

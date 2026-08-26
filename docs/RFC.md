@@ -83,7 +83,7 @@ terceiro, fora do nosso controle.
   └──────────────────────────────────────────────┘
             │ commit
             ▼
-     [ webhook_outbox ]   PENDING | PROCESSING | FAILED | DELIVERED
+     [ webhook_outbox ]   PENDING | PROCESSING | FAILED | DELIVERED | DEAD_LETTERED
             │
             │  polling 2s  (processo separado: src/worker.ts)
             ▼
@@ -170,7 +170,7 @@ Todas foram levantadas e descartadas na própria reunião.
 | # | Alternativa | Trade-off que motivou o descarte | ADR |
 | --- | --- | --- | --- |
 | 1 | **Disparo HTTP síncrono dentro de `changeStatus`** — Larissa abre a questão ([09:03]), Bruno argumenta contra ([09:04]) | Trocaria disponibilidade e isolamento do core de pedidos por facilidade de implementação: um cliente lento travaria a mudança de status de **outros** pedidos, e não há rollback aceitável se o cliente estiver fora do ar. Diego: "síncrono está fora de questão" ([09:06]) | [ADR-001](./adrs/ADR-001-outbox-no-mysql.md) |
-| 2 | **Redis Streams / broker dedicado** — Larissa ([09:07]) | Escalabilidade futura em troca de custo operacional imediato para um time pequeno; e publicar fora da transação MySQL reintroduziria o dual-write que o outbox resolve. Diego: "overengineering. Outbox no MySQL existente resolve" ([09:07]) | [ADR-001](./adrs/ADR-001-outbox-no-mysql.md) |
+| 2 | **Redis Streams / broker dedicado** — Larissa ([09:07]) | Escalabilidade futura em troca de custo operacional imediato para um time pequeno; e publicar fora da transação MySQL reintroduziria o dual-write que o outbox resolve. Diego: "Subir Redis Cluster pra isso é overengineering. Outbox no MySQL existente resolve" ([09:07]) — a razão dada foi o tamanho do time | [ADR-001](./adrs/ADR-001-outbox-no-mysql.md) |
 | 3 | **Trigger de banco notificando o worker** — Bruno ([09:09]) | Ganharíamos latência que **não é requisito** (SLA < 10 s) ao custo de um mecanismo frágil: MySQL não tem `LISTEN`/`NOTIFY` e trigger só executa SQL; avisar processo externo exigiria improviso ([09:09] Diego) | [ADR-002](./adrs/ADR-002-worker-em-processo-separado-com-polling.md) |
 | 4 | **Garantia exactly-once** — Diego ([09:25]) | Simplicidade para o cliente em troca de complexidade desproporcional: exigiria coordenação dos dois lados. "At-least-once com event_id resolve 99% dos casos" ([09:25]) | [ADR-005](./adrs/ADR-005-entrega-at-least-once-com-x-event-id.md) |
 | 5 | **Secret global da plataforma** — Sofia ([09:21]) | Simplicidade operacional em troca de raio de explosão igual à base inteira de clientes: "se vaza uma, vaza tudo" ([09:21]) | [ADR-004](./adrs/ADR-004-assinatura-hmac-sha256-com-secret-por-endpoint.md) |
@@ -238,7 +238,7 @@ recusar a segunda rotação enquanto houver janela aberta.
 
 | Dimensão | Impacto |
 | --- | --- |
-| **Código existente** | Alteração de comportamento em um único ponto de domínio: `changeStatus` em `src/modules/orders/order.service.ts`. Além dele, mudanças mecânicas de registro em `src/app.ts` e `src/routes/index.ts`, e uma linha em `src/modules/orders/order.controller.ts`. `error.middleware.ts`, `validate.middleware.ts` e `auth.middleware.ts` são **consumidos sem alteração** ([09:29] Bruno) |
+| **Código existente** | Alteração de comportamento em um único ponto de domínio: `changeStatus` em `src/modules/orders/order.service.ts`. Além dele, mudanças mecânicas (registro do módulo, extensão das classes de erro e do schema de ambiente, script novo) em `src/app.ts`, `src/routes/index.ts`, `src/shared/errors/*`, `src/config/env.ts` e `package.json`, mais uma linha em `src/modules/orders/order.controller.ts` — lista completa em [FDD §10.1](./FDD.md#101-mapa-de-integração). `error.middleware.ts`, `validate.middleware.ts` e `auth.middleware.ts` são **consumidos sem alteração** ([09:29] Bruno) |
 | **Logger** | `src/shared/logger/index.ts` exige **uma alteração pontual obrigatória**: incluir a secret de webhook na lista de `redactPaths`, que hoje não a cobre. Sem isso, um log acidental vaza o segredo — o incidente que Diego relatou ([09:22]). Ver [FDD §9.2](./FDD.md#92-logs) |
 | **Banco de dados** | Novas tabelas de configuração, outbox, entregas e dead letter em `prisma/schema.prisma` + migration. A transação de `changeStatus` ganha um `INSERT` por endpoint assinante, aumentando o tempo de lock |
 | **Operação** | Um artefato de deploy novo (`npm run worker`), com ciclo de vida próprio, e **duas pools de conexão** contra o mesmo MySQL — exige revisar `max_connections` |

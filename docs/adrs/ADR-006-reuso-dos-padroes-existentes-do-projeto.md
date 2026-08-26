@@ -47,7 +47,11 @@ O código existente tem convenções bem estabelecidas e uniformes:
    `WEBHOOK_NOT_FOUND`, `WEBHOOK_INVALID_URL`, `WEBHOOK_SECRET_REQUIRED` e os demais listados em
    [`docs/FDD.md`](../FDD.md) ([09:28] Bruno).
 5. **Nada novo de logging.** O Pino de `src/shared/logger/index.ts` já está no projeto inteiro e é o
-   que o módulo e o worker usam ([09:29] Bruno).
+   que o módulo e o worker usam ([09:29] Bruno) — nenhuma biblioteca nova entra. O arquivo, porém,
+   **sofre uma alteração pontual obrigatória**: incluir a secret de webhook na lista de
+   `redactPaths`, que hoje cobre `password`, `passwordHash`, `token` e `accessToken`, mas não
+   secret. Sem isso, o incidente que Diego relatou do lado de um cliente ([09:22]) passa a ser
+   possível do nosso lado. Ver [`docs/FDD.md`](../FDD.md#92-logs).
 6. **O error middleware não muda.** `src/middlewares/error.middleware.ts` já trata `AppError`,
    `ZodError` e erros conhecidos do Prisma; como os erros de webhook herdam de `AppError`, eles são
    serializados corretamente **sem nenhuma alteração no middleware** ([09:29] Bruno).

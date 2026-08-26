@@ -73,6 +73,14 @@ DER_MARC=$(grep -cE '^\| (PRD|RFC|FDD|ADR)-.*⇢ derivado' docs/TRACKER.md)
 DER_NOTAS=$(awk '/^### Itens derivados/{f=1;next} /^### Itens da reunião deliberadamente/{f=0} f' docs/TRACKER.md | grep -cE '^\| (PRD|RFC|FDD|ADR)-')
 [ "$DER_MARC" -eq "$DER_NOTAS" ] && ok "itens ⇢ derivado: $DER_MARC marcados = $DER_NOTAS documentados nas notas" \
                                  || bad "itens ⇢ derivado: $DER_MARC marcados mas $DER_NOTAS documentados nas notas"
+# todo marcador ⇢ derivado fora do tracker precisa de um ID correspondente na tabela de notas
+: > /tmp/_der_orfaos
+for f in docs/PRD.md docs/RFC.md docs/FDD.md docs/adrs/ADR-*.md; do
+  grep -q '⇢ \*\?derivado' "$f" || continue
+  grep -c '⇢ \*\?derivado' "$f" | while read -r c; do echo "$f:$c" >> /tmp/_der_fora; done
+done
+DER_FORA=$(awk -F: '{soma+=$2} END{print soma+0}' /tmp/_der_fora 2>/dev/null); rm -f /tmp/_der_fora
+echo "     ($DER_FORA marcadores ⇢ derivado nos documentos, fora do tracker — cada um deve ter linha no tracker)"
 SEM_LOC=$(grep -E '^\| (PRD|RFC|FDD|ADR)-' docs/TRACKER.md | grep -cE '\| (TRANSCRICAO|CODIGO) \| *\|')
 [ "$SEM_LOC" -eq 0 ] && ok "nenhuma linha com Localização vazia" || bad "$SEM_LOC linha(s) sem Localização"
 

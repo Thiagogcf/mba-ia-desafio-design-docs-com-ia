@@ -71,9 +71,9 @@ Bruno propôs uma política mais agressiva: "3 não é melhor? Mais agressivo" (
 
 - **A favor:** libera o evento mais rápido, menos linhas em estado pendente, feedback mais rápido
   de que o cliente está quebrado.
-- **Contra:** com a escada proposta, três tentativas encerram em ~36 minutos. Diego apontou o caso
-  concreto: cliente com indisponibilidade de manhã seria morto em 30 minutos, e já houve cliente
-  com duas horas de manutenção planejada ([09:16]).
+- **Contra:** com a escada proposta, três tentativas encerram em ~36 minutos. Diego usou o
+  cenário-limite do cliente indisponível pela manhã, que seria morto em ~30 minutos, e apoiou o
+  argumento no caso real da manutenção planejada de duas horas ([09:16]).
 - **Trade-off que motivou o descarte:** liberar a fila rápido em troca de descartar eventos de
   clientes que voltariam sozinhos. Como o custo de uma linha parada na outbox é baixíssimo e o
   custo de um evento perdido é uma reclamação de cliente B2B, cinco venceu ([09:16] Larissa).
@@ -112,8 +112,11 @@ Alternativa levantada pela própria Larissa ao abrir o ponto ([09:17]).
   virar log perdido ([09:18] Diego).
 - **Existe caminho de recuperação sem deploy:** o replay administrativo devolve o evento à outbox
   ([09:18] Diego).
-- **Caminho quente do worker permanece limpo** — a query de pendentes não precisa filtrar eventos
-  mortos.
+- **Caminho quente do worker permanece limpo.** A query de pendentes não seleciona eventos mortos:
+  a linha de origem passa a um estado terminal e sai da fila de trabalho. Ela **não é apagada** —
+  vira tombstone, para preservar a integridade do histórico de entregas e permitir o replay do mesmo
+  `event_id`. O detalhe está em [`docs/FDD.md`](../FDD.md#54-dead-letter-e-replay); é derivação
+  nossa, e não decisão da reunião, que tratou apenas de onde o evento morto vai parar.
 
 ### Negativas
 

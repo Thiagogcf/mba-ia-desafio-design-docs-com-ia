@@ -90,7 +90,7 @@ sustenta praticamente todas as decisões técnicas do [RFC](./RFC.md).
 
 **C1 — Acompanhar o envio de um pedido.** Um cliente assina apenas `SHIPPED` e `DELIVERED` — o
 exemplo que Marcos usou para descrever o filtro de eventos: "só quero saber quando vira SHIPPED e
-DELIVERED" ([09:34]). Quando um pedido dele é despachado, o sistema do cliente recebe a notificação
+DELIVERED" ([09:33]). Quando um pedido dele é despachado, o sistema do cliente recebe a notificação
 em segundos e dispara automaticamente o aviso ao cliente final, sem nenhuma consulta ao nosso
 `GET /orders`.
 
@@ -122,7 +122,7 @@ reprocessa manualmente os eventos parados ([09:18] e [09:35] Diego).
 | --- | --- | --- | --- | --- |
 | **O1** | Notificar o cliente em tempo real, conforme a definição dele | Latência p95 entre o commit da mudança de status e a resposta do cliente | **< 10 segundos** | [09:02] Marcos |
 | **O2** | Não perder nenhum evento por falha do sistema | Mudanças de status commitadas sem evento registrado para endpoints assinantes | **0 ocorrências** | [09:40] Bruno: "Não pode ter caso de status mudar e evento não sair" |
-| **O3** | Reter os três clientes B2B que motivaram a feature | Atlas Comercial, MaxDistribuição e Nova Cargo integrados e recebendo webhooks em produção | **3 de 3 até o fim de novembro** | [09:00] e [09:45] Marcos |
+| **O3** | Reter os três clientes B2B que motivaram a feature | (a) feature em produção até o prazo pedido pela Atlas; (b) Atlas, MaxDistribuição e Nova Cargo integrados e recebendo webhooks | (a) **fim de novembro** ([09:45] Marcos); (b) **3 de 3** — a reunião não acordou data para o onboarding dos três | [09:00] e [09:45] Marcos |
 | **O4** | Absorver indisponibilidade transitória do cliente sem intervenção | Proporção de eventos entregues dentro da janela de 5 retentativas, sem chegar à dead letter | **Meta a definir após medir a linha de base no primeiro mês.** A reunião fixou a política de retry, não um alvo numérico de entrega | [09:15]–[09:17] Diego |
 | **O5** | Eliminar a necessidade de polling dos clientes integrados | Volume de `GET /orders` originado dos três clientes | **Queda relevante** frente à linha de base — *linha de base a medir antes do lançamento* | [09:00] Marcos |
 | **O6** | Entregar dentro do compromisso comercial | Sprints consumidos, incluindo a revisão de segurança | **3 sprints** | [09:46] Larissa e Sofia |
@@ -149,7 +149,7 @@ O instrumento de medição está definido em [`docs/FDD.md`](./FDD.md#91-métric
 | # | Item | Origem |
 | --- | --- | --- |
 | E1 | Cadastro, edição, listagem e remoção de webhooks por cliente | [09:31] Marcos; [09:33] Bruno |
-| E2 | Filtro de eventos por endpoint — o cliente escolhe quais status quer receber | [09:33] Bruno; [09:34] Marcos |
+| E2 | Filtro de eventos por endpoint — o cliente escolhe quais status quer receber | [09:33] Bruno; [09:33] Marcos |
 | E3 | Entrega assíncrona e garantida de eventos de mudança de status | [09:06] Diego; [09:40] Bruno |
 | E4 | Assinatura HMAC-SHA256 com secret por endpoint | [09:22] Sofia |
 | E5 | Rotação de secret com período de convivência de 24 h | [09:21] Sofia |
@@ -183,7 +183,7 @@ descartou transcrita na última coluna. Nada aqui é suposição do redator.
 | **RF-02** | **Editar webhook** | Permite alterar URL, lista de status assinados e o estado ativo/inativo | [09:33] Bruno |
 | **RF-03** | **Remover webhook** | Remove o cadastro de webhook | [09:33] Bruno |
 | **RF-04** | **Listar webhooks de um cliente** | Retorna os webhooks cadastrados de um `customer_id`, **sem expor a secret** | [09:33] Bruno |
-| **RF-05** | **Filtrar eventos por endpoint** | Cada endpoint assina uma lista de status — por exemplo, "só quero saber quando vira `SHIPPED` e `DELIVERED`". O filtro é aplicado **no momento em que o evento é registrado**, e não no envio | [09:33] Bruno; [09:34] Marcos; [09:34] Bruno e Diego |
+| **RF-05** | **Filtrar eventos por endpoint** | Cada endpoint assina uma lista de status — por exemplo, "só quero saber quando vira `SHIPPED` e `DELIVERED`". O filtro é aplicado **no momento em que o evento é registrado**, e não no envio | [09:33] Bruno; [09:33] Marcos; [09:34] Bruno e Diego |
 | **RF-06** | **Registrar o evento de forma atômica com a mudança de status** | Quando o status de um pedido muda, o evento é registrado na mesma transação. Se o registro falhar, **a mudança de status é desfeita** | [09:40] Bruno; [09:41] Diego |
 | **RF-07** | **Entregar o evento por HTTP assinado** | O envio carrega o identificador do evento, a assinatura, o timestamp do envio e o identificador do webhook | [09:44] Diego; [09:44] Sofia |
 | **RF-08** | **Retentar automaticamente em caso de falha** | Cinco retentativas com intervalos crescentes de 1 min, 5 min, 30 min, 2 h e 12 h | [09:17] Diego |
@@ -245,7 +245,7 @@ o que ganhamos e o que aceitamos perder.
 | D1 | **Banco MySQL já existente** | Técnica | A fila de eventos vive no banco atual; não há infraestrutura nova ([09:07] Diego). O worker usa a mesma `DATABASE_URL` ([09:30] Bruno) | [09:07] Diego; [09:30] Bruno |
 | D2 | **Módulo de pedidos** | Técnica | A feature depende do ponto de mudança de status em `src/modules/orders/order.service.ts` ([09:40] Bruno) | [09:40] Bruno |
 | D3 | **Controle de acesso por papel existente** | Técnica | O reprocessamento reaproveita o `requireRole` já implementado ([09:36] Larissa) | [09:36] Larissa |
-| D4 | **Padrões compartilhados do projeto** | Técnica | Classes de erro, logger Pino e middleware de erro central são consumidos como estão ([09:29] Bruno) | [09:29] Bruno |
+| D4 | **Padrões compartilhados do projeto** | Técnica | O middleware de erro central é consumido **como está**; as classes de erro são **estendidas** (não alteradas); o logger Pino é reaproveitado com **uma única alteração obrigatória** em `redactPaths` ([09:29] Bruno; ver [FDD §9.2](./FDD.md#92-logs)) | [09:29] Bruno |
 | D5 | **Revisão de segurança da Sofia** | **Bloqueante para o deploy** | Mínimo de **2 dias úteis** reservados para revisar HMAC e geração de secret **antes de subir** ([09:46] Sofia) | [09:46] Sofia |
 | D6 | **Sessão de revisão do design com Bruno e Diego** | Bloqueante para o início da codificação | Larissa se comprometeu a marcar antes de começar a codar ([09:50]) | [09:50] Larissa |
 | D7 | **Documentação no portal do desenvolvedor** | De lançamento | Marcos documenta como integrar via API ([09:40]) e destaca a garantia at-least-once ([09:26]) | [09:26] e [09:40] Marcos |
@@ -309,7 +309,9 @@ técnicos correspondentes estão em [`docs/FDD.md`](./FDD.md#12-critérios-de-ac
       (ver [FDD §11.3](./FDD.md#113-compatibilidade)).
 - [ ] Pedidos de clientes **sem** webhook cadastrado se comportam exatamente como antes.
 - [ ] Os testes existentes (`tests/auth.test.ts` e `tests/orders.test.ts`) continuam passando sem
-      alteração; `tests/setup.ts` ganha apenas a limpeza das tabelas novas.
+      alteração; `tests/setup.ts` ganha apenas a limpeza das tabelas novas e
+      `tests/helpers/factories.ts` ganha apenas a factory de webhook, sem alterar as existentes
+      (ver [FDD §10.9](./FDD.md#109-tests--o-que-precisa-mudar)).
 - [ ] Nenhuma dependência nova foi adicionada ao projeto (RNF-15).
 
 ### Escopo
@@ -341,7 +343,7 @@ Larissa estimou "integração no order.service e testes ponta a ponta" como meio
 2. **Rollback transacional:** falha forçada no registro do evento mantém o pedido no status anterior
    ([09:40] Bruno).
 3. **Filtro respeitado:** webhook que assina apenas `SHIPPED` e `DELIVERED` não recebe `PAID`
-   ([09:34] Marcos).
+   ([09:33] Marcos).
 4. **Retentativa e recuperação:** receptor fora do ar na primeira tentativa e no ar na segunda —
    evento entregue sem intervenção ([09:15] Diego).
 5. **Falha permanente e reprocessamento:** receptor sempre fora do ar — evento vai para a fila de

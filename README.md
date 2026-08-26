@@ -95,7 +95,7 @@ frases genéricas saíram dos documentos.
 **Marcar o derivado como derivado.** Alguns itens são consequência necessária de uma decisão, sem
 serem citação literal — por exemplo, a regra de destravar eventos presos em `PROCESSING` após um
 crash. Em vez de fingir que estavam na transcrição ou de descartá-los, marquei cada um com `⇢
-derivado` no tracker, apontando para a decisão-mãe. São **25 itens**, todos listados em
+derivado` no tracker, apontando para a decisão-mãe. São **31 itens**, todos listados em
 [Itens derivados](./docs/TRACKER.md#itens-derivados) — e o script de validação falha se a contagem
 de marcadores divergir da tabela de notas, para a lista não envelhecer em silêncio.
 
@@ -208,9 +208,9 @@ reescrevendo os dois documentos de uma vez, e você perde a chance de revisar a 
 
 ## Iterações e ajustes
 
-Foram **seis ciclos principais** de geração → revisão crítica → ajuste de prompt → nova geração. Os
-momentos em que a IA errou e precisei corrigir — o último, a auditoria adversarial, foi de longe o
-mais produtivo:
+Foram **sete ciclos principais** de geração → revisão crítica → ajuste de prompt → nova geração. Os
+momentos em que a IA errou e precisei corrigir — as duas rodadas de auditoria adversarial, no fim,
+foram de longe as mais produtivas:
 
 ### Iteração 1 — A IA transformou itens descartados em requisitos
 
@@ -297,8 +297,9 @@ e essa diferença só aparece cruzando transcrição com código.
 **Como corrigi.** Escrevi o [`scripts/validate-docs.sh`](./scripts/validate-docs.sh), que extrai
 todo caminho de arquivo e toda citação `[hh:mm] Nome` dos documentos e valida mecanicamente contra o
 repositório e contra a transcrição. Rodei até zerar. Não confio na IA para auditar a IA em algo que
-um `grep` resolve com certeza. As notas de compatibilidade de caminho estão no
-[RFC §3.3](./docs/RFC.md#33-superfície-pública-proposta) e no [FDD §6](./docs/FDD.md#6-contratos-públicos).
+um `grep` resolve com certeza. A nota de compatibilidade de caminhos ficou no
+[FDD §6](./docs/FDD.md#6-contratos-públicos); o [RFC §3.3](./docs/RFC.md#33-superfície-pública-proposta)
+apenas remete a ela, para não duplicar altitude.
 
 **O que aconteceu — parte B.** O RFC saiu com quase 3.000 palavras e uma tabela de nove alternativas
 detalhadas — conteúdo correto, altitude errada. O enunciado pede um documento conciso de 2 a 4
@@ -335,7 +336,7 @@ excluído da query — o que de quebra resolve o duplo sentido de `FAILED` ("agu
 
 **A contagem que o próprio pacote vendia sobre si.** O tracker afirmava "São 9 itens derivados, todos
 listados". Eram 16 marcados, a tabela cobria 13, e três nunca apareciam. Isso atinge exatamente a
-garantia que o documento existe para dar. Reescrevi a tabela com todos (hoje 25, depois das outras
+garantia que o documento existe para dar. Reescrevi a tabela com todos (hoje 31, depois das outras
 correções) e **acrescentei ao script uma checagem que compara a contagem de marcadores com a de
 linhas da tabela** — o erro não pode voltar em silêncio.
 
@@ -381,28 +382,89 @@ filtro `SHIPPED`/`DELIVERED` à Atlas quando Marcos deu o exemplo sem nomear cli
 usavam citações **verdadeiras** para sustentar afirmações **falsas**. Quem só valida a forma acha
 que terminou cedo demais.
 
+### Iteração 7 — A rodada que auditou as próprias correções
+
+Depois de aplicar tudo da iteração 6, rodei uma **segunda** leva de auditores, agora com duas
+perguntas: *cada correção foi mesmo aplicada?* e *alguma correção quebrou outra coisa?* Os três
+voltaram REPROVADO — e estavam certos.
+
+**O bug de verdade, que sobreviveu a todas as leituras anteriores.** O `X-Event-Id` é o eixo do
+contrato: é por ele que o cliente deduplica ([ADR-005](./docs/adrs/ADR-005-entrega-at-least-once-com-x-event-id.md)).
+O FDD também estabelece que a outbox tem **uma linha por (evento × endpoint assinante)**, porque
+retry e DLQ são estado por endpoint. As duas coisas estavam certas isoladamente — e juntas produziam
+um bug. Meu algoritmo de publicação renderizava o payload **uma vez, antes** do laço de inserção:
+
+```
+4. payload ← renderEventPayload(order, from, to)     ← UMA vez
+5. verifica 64 KB
+6. para cada assinante: create({ ..., payload })     ← MESMO payload, ids de linha diferentes
+```
+
+Um cliente com dois webhooks receberia duas entregas com o **mesmo** `X-Event-Id`. Ele dedupica,
+como mandamos ele deduplicar, e **descarta a segunda em silêncio** — o evento se perde exatamente no
+mecanismo criado para não perder eventos. A correção foi mover a geração do id para dentro do laço,
+render o payload por linha e passar o id explicitamente no `create`, de modo que
+`event_id === webhook_outbox.id`. Nenhuma verificação mecânica pegaria isso: não há citação errada,
+não há caminho inexistente, não há link quebrado. É uma contradição entre duas decisões corretas.
+
+**Duas correções que introduziram defeitos novos.** Ao reescrever a nota da DLQ, escrevi entre aspas
+que Diego disse que a alternativa *"polui a leitura da outbox principal, que é o caminho quente do
+worker"* — atribuindo a ele a **minha** paráfrase. Diego disse: *"Mais limpa a leitura da outbox
+principal, e fica como evidence pra debug e reprocessamento"* (`[09:18]`). E ao corrigir o cenário C1
+para não atribuir o filtro à Atlas, troquei o timestamp errado: o exemplo "só quero saber quando vira
+SHIPPED e DELIVERED" é `[09:33]` Marcos, não `[09:34]` Marcos — que naquele minuto está pedindo outra
+coisa, o histórico de entregas. O erro se espalhou por seis lugares.
+
+**Correções aplicadas em um documento só.** Tirei do RFC a afirmação de que o logger é "consumido sem
+alteração", mas ela continuava viva na ADR-006, na dependência D4 do PRD e na linha `RFC-IMP-03` do
+tracker. Mesma coisa com a recontagem de itens derivados: corrigida no tracker e num parágrafo do
+README, esquecida na tabela de navegação — que voltou a dizer "9 itens" na mesma página que dizia
+"25". A lição: **uma correção não está feita enquanto não for propagada para todos os documentos que
+repetem a afirmação**, e o tracker é o índice que diz quais são.
+
+**E um punhado de incoerências de especificação** que só aparecem quando alguém lê o FDD como se
+fosse implementar: `WEBHOOK_INACTIVE` sem nenhum caminho de execução; o campo `attempt` do histórico
+sem regra de cálculo; o esboço do worker sem `.catch`, o que no Node ≥ 20 derruba o processo na
+primeira falha de conexão — justo o risco RT-2, o silencioso; a função `bootstrap()` declarada e
+nunca chamada; `secretRotatedAt` devolvido em algumas respostas e não em outras.
+
+Depois dessa rodada, estendi o script para checar também os marcadores `⇢ derivado` fora do tracker,
+e passei a **regerar** o bloco de saída do README a partir da execução real, em vez de digitá-lo.
+
 ### Resultado da validação final
 
 ```
 $ bash scripts/validate-docs.sh
-
 1. Citações da transcrição
   ✓ 82 pares [hh:mm] Nome distintos usados nos docs existem entre os 128 pares da TRANSCRICAO.md
      (esta checagem prova EXISTÊNCIA do par, não fidelidade do conteúdo citado)
+
 2. Caminhos de arquivo citados
   ✓ 45 caminhos de arquivos existentes conferem
+
 3. Cobertura do TRACKER.md
-     linhas: 361 | TRANSCRICAO: 290 (80%) | CODIGO: 71
-  ✓ TRANSCRICAO >= 70%   ✓ CODIGO >= 5 linhas
-  ✓ itens ⇢ derivado: 25 marcados = 25 documentados nas notas
+     linhas: 372 | TRANSCRICAO: 301 (80%) | CODIGO: 71
+  ✓ TRANSCRICAO >= 70% (80%)
+  ✓ CODIGO >= 5 linhas (71)
+  ✓ itens ⇢ derivado: 31 marcados = 31 documentados nas notas
+     (7 marcadores ⇢ derivado nos documentos, fora do tracker — cada um deve ter linha no tracker)
   ✓ nenhuma linha com Localização vazia
+
 4. Estrutura do pacote
+  ✓ README.md
+  ✓ TRANSCRICAO.md
+  ✓ docs/PRD.md
+  ✓ docs/RFC.md
+  ✓ docs/FDD.md
+  ✓ docs/TRACKER.md
   ✓ docs/adrs/ contém 7 ADRs (entre 5 e 8)
   ✓ todos os ADRs têm Status, Contexto, Decisão, Alternativas e Consequências
+
 5. Itens descartados não aparecem como requisito
   ✓ nenhum item descartado na reunião virou requisito funcional
+
 6. Links e âncoras internas entre os documentos
-  ✓ 199 links internos resolvem (arquivo + âncora)
+  ✓ 210 links internos resolvem (arquivo + âncora)
 
 VALIDAÇÃO OK
 ```
@@ -423,7 +485,7 @@ conteúdo só sai com leitura.
 │   ├── PRD.md                       problema, escopo, requisitos, métricas, riscos
 │   ├── RFC.md                       proposta técnica, alternativas, questões em aberto
 │   ├── FDD.md                       contratos, fluxos, erros, integração com o código
-│   ├── TRACKER.md                   rastreabilidade item a item (351 linhas)
+│   ├── TRACKER.md                   rastreabilidade item a item (372 linhas)
 │   ├── ENUNCIADO.md                 enunciado original do desafio
 │   └── adrs/
 │       ├── README.md                índice das decisões
@@ -447,7 +509,7 @@ conteúdo só sai com leitura.
 | 2 | [`docs/RFC.md`](./docs/RFC.md) | A proposta técnica em nível de arquitetura, com as alternativas descartadas e as 8 questões ainda em aberto |
 | 3 | [`docs/adrs/`](./docs/adrs/) | Comece pela [ADR-001](./docs/adrs/ADR-001-outbox-no-mysql.md), que é a decisão da qual todas as outras dependem. O [índice](./docs/adrs/README.md) mostra o mapa |
 | 4 | [`docs/FDD.md`](./docs/FDD.md) | O detalhe de implementação. Se você é a pessoa que vai codar, comece pela [§10, Integração com o sistema existente](./docs/FDD.md#10-integração-com-o-sistema-existente) |
-| 5 | [`docs/TRACKER.md`](./docs/TRACKER.md) | Consulte quando quiser saber de onde veio qualquer item. As [notas de rastreabilidade](./docs/TRACKER.md#notas-de-rastreabilidade) explicam os 9 itens derivados e o que foi deliberadamente descartado |
+| 5 | [`docs/TRACKER.md`](./docs/TRACKER.md) | Consulte quando quiser saber de onde veio qualquer item. As [notas de rastreabilidade](./docs/TRACKER.md#notas-de-rastreabilidade) explicam os 31 itens derivados e o que foi deliberadamente descartado |
 
 ### Atalhos por interesse
 

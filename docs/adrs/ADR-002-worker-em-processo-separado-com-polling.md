@@ -68,8 +68,8 @@ Rodar o loop de entrega dentro do mesmo processo Node que serve o Express.
   passa a competir por event loop com o tráfego HTTP; e escalar a API horizontalmente
   multiplicaria os workers sem querer, quebrando a premissa de instância única desta ADR.
 - **Trade-off que motivou o descarte:** simplicidade de deploy em troca de acoplar o ciclo de vida
-  da entrega ao ciclo de vida da API. Como o requisito é justamente *não* ficar pendurado
-  ([09:02] Marcos), o acoplamento é inaceitável.
+  da entrega ao ciclo de vida da API. Diego foi direto sobre a consequência: "se a API reinicia,
+  perde o worker" ([09:11]) — e um deploy de API não pode interromper a entrega de notificações.
 
 ### C. Múltiplos workers em paralelo desde o início — **adiada**
 
@@ -86,7 +86,8 @@ Rodar o loop de entrega dentro do mesmo processo Node que serve o Express.
 
 - **Isolamento de falhas.** Deploy, restart ou crash da API não interrompem a entrega de webhooks,
   e vice-versa ([09:11] Diego).
-- **Recuperação automática sem estado próprio.** Todo o estado de progresso vive na `webhook_outbox`;
+- **Recuperação automática sem estado próprio.** Todo o estado de progresso vive na `webhook_outbox`
+  (incluindo o estado terminal dos eventos já esgotados, ver [`docs/FDD.md`](../FDD.md#54-dead-letter-e-replay));
   ao reiniciar, o worker simplesmente volta a ler os pendentes. Não há fila em memória a perder.
 - **Ordenação por pedido sai de graça** enquanto for uma instância só, sem lock nem coordenação
   ([09:12] Diego).
