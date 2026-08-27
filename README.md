@@ -530,6 +530,17 @@ conteúdo só sai com leitura.
 
 ## Escopo da entrega
 
-Esta entrega é **puramente documental**. Nenhum arquivo de `src/`, `prisma/` ou `tests/` foi
-alterado — o código serve de contexto e referência, e os documentos descrevem como a feature se
-integraria a ele. As únicas adições fora de `docs/` são este README e o script de validação.
+Esta entrega é **puramente documental**. Nenhum arquivo de `src/`, `prisma/`, `tests/` ou de
+configuração foi alterado — o código serve de contexto e referência, e os documentos descrevem como
+a feature se integraria a ele.
+
+O entregável são os seis documentos: [`README.md`](./README.md), [`docs/PRD.md`](./docs/PRD.md),
+[`docs/RFC.md`](./docs/RFC.md), [`docs/FDD.md`](./docs/FDD.md),
+[`docs/TRACKER.md`](./docs/TRACKER.md) e os sete ADRs em [`docs/adrs/`](./docs/adrs/).
+
+[`scripts/validate-docs.sh`](./scripts/validate-docs.sh) **não é entregável** — é a ferramenta de
+processo que sustenta o que este README afirma. Ele está versionado por um motivo só: sem o arquivo,
+as afirmações de que "as 84 citações foram conferidas" e de que "a cobertura é verificada
+automaticamente" seriam palavra minha, e quem avalia teria de acreditar. Com ele, um `bash
+scripts/validate-docs.sh` confirma ou desmente em dois segundos. Ele não toca a aplicação: só lê os
+documentos, a `TRANSCRICAO.md` e a árvore de arquivos.
