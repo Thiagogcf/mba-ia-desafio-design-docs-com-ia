@@ -4,8 +4,8 @@ Pacote de design docs da feature **Sistema de Webhooks de Notificação de Pedid
 partir da transcrição de uma reunião técnica ([`TRANSCRICAO.md`](./TRANSCRICAO.md)) e do código de um
 Order Management System em produção, usando IA como ferramenta principal de produção.
 
-> O enunciado original do desafio está preservado em
-> [`docs/ENUNCIADO.md`](./docs/ENUNCIADO.md).
+> O enunciado original do desafio está no repositório base:
+> [devfullcycle/mba-ia-desafio-design-docs-com-ia](https://github.com/devfullcycle/mba-ia-desafio-design-docs-com-ia).
 
 ---
 
@@ -436,14 +436,14 @@ e passei a **regerar** o bloco de saída do README a partir da execução real, 
 ```
 $ bash scripts/validate-docs.sh
 1. Citações da transcrição
-  ✓ 82 pares [hh:mm] Nome distintos usados nos docs existem entre os 128 pares da TRANSCRICAO.md
+  ✓ 84 pares [hh:mm] Nome distintos usados nos docs existem entre os 128 pares da TRANSCRICAO.md
      (esta checagem prova EXISTÊNCIA do par, não fidelidade do conteúdo citado)
 
 2. Caminhos de arquivo citados
-  ✓ 45 caminhos de arquivos existentes conferem
+  ✓ 44 caminhos de arquivos existentes conferem
 
 3b. Cobertura dos itens rotulados dos documentos
-  ✓ 122 itens rotulados, cobertura 100% (exigido >= 80%)
+  ✓ 114 itens rotulados, cobertura 100% (exigido >= 80%)
 
 3. Cobertura do TRACKER.md
      linhas: 373 | TRANSCRICAO: 302 (80%) | CODIGO: 71
@@ -467,10 +467,9 @@ $ bash scripts/validate-docs.sh
   ✓ nenhum item descartado na reunião virou requisito funcional
 
 6. Links e âncoras internas entre os documentos
-  ✗ README.md: ancora inexistente -> ./docs/TRACKER.md#regra-de-contagem-e-denominador
-  ✗ README.md: ancora inexistente -> ./docs/TRACKER.md#varredura-reversa--o-que-a-reunião-produziu-e-onde-foi-parar
+  ✓ 210 links internos resolvem (arquivo + âncora)
 
-VALIDAÇÃO FALHOU
+VALIDAÇÃO OK
 ```
 
 O que o script **não** prova, e por isso a iteração 6 existiu: ele confere que o par
@@ -490,7 +489,6 @@ conteúdo só sai com leitura.
 │   ├── RFC.md                       proposta técnica, alternativas, questões em aberto
 │   ├── FDD.md                       contratos, fluxos, erros, integração com o código
 │   ├── TRACKER.md                   rastreabilidade item a item (373 linhas, cobertura 100% dos 122 itens rotulados)
-│   ├── ENUNCIADO.md                 enunciado original do desafio
 │   └── adrs/
 │       ├── README.md                índice das decisões
 │       ├── ADR-001-outbox-no-mysql.md
