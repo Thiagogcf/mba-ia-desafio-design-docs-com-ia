@@ -305,10 +305,14 @@ apenas remete a ela, para não duplicar altitude.
 detalhadas — conteúdo correto, altitude errada. O enunciado pede um documento conciso de 2 a 4
 páginas, e o detalhamento pertence ao FDD.
 
-**Como corrigi.** Rodei o prompt nº 4 (correção de altitude) para diagnosticar as duplicações, mantive
-no RFC as cinco alternativas com maior peso arquitetural com o trade-off completo e reduzi as outras
-quatro a uma linha apontando para a ADR correspondente. O RFC ficou em pouco mais de 2.600 palavras,
-sem perder nenhuma alternativa.
+**Como corrigi, em dois tempos.** Primeiro rodei o prompt nº 4 (correção de altitude) para
+diagnosticar as duplicações, mantive no RFC as cinco alternativas de maior peso arquitetural com o
+trade-off completo e reduzi as outras quatro a uma linha apontando para a ADR correspondente — o que
+levou o documento a ~2.600 palavras. Ainda era cerca de cinco páginas. No segundo corte, converti as
+seções de prosa em tabelas: os sete pilares da proposta, as oito questões em aberto e os riscos de
+arquitetura viraram linhas com origem e ADR em cada uma, a lista de ADRs substituiu a tabela
+redundante e o diagrama foi compactado. **Resultado: 2.114 palavras e 159 linhas — 3 a 4 páginas**,
+com as oito seções obrigatórias, as nove alternativas e as oito questões preservadas.
 
 ### Iteração 6 — A auditoria adversarial, que foi a mais produtiva de todas
 
@@ -378,7 +382,7 @@ que era inferência minha sob um cabeçalho que prometia "nada aqui é suposiç�
 filtro `SHIPPED`/`DELIVERED` à Atlas quando Marcos deu o exemplo sem nomear cliente.
 
 **A lição.** O script mecânico e a auditoria semântica pegam coisas disjuntas. O `grep` provou que os
-82 pares `[hh:mm] Nome` existem; nenhum dos oito problemas acima seria pego por ele, porque todos
+84 pares `[hh:mm] Nome` existem; nenhum dos oito problemas acima seria pego por ele, porque todos
 usavam citações **verdadeiras** para sustentar afirmações **falsas**. Quem só valida a forma acha
 que terminou cedo demais.
 
@@ -443,10 +447,10 @@ $ bash scripts/validate-docs.sh
   ✓ 44 caminhos de arquivos existentes conferem
 
 3b. Cobertura dos itens rotulados dos documentos
-  ✓ 114 itens rotulados, cobertura 100% (exigido >= 80%)
+  ✓ 122 itens rotulados, cobertura 100% (exigido >= 80%)
 
 3. Cobertura do TRACKER.md
-     linhas: 373 | TRANSCRICAO: 302 (80%) | CODIGO: 71
+     linhas: 372 | TRANSCRICAO: 301 (80%) | CODIGO: 71
   ✓ TRANSCRICAO >= 70% (80%)
   ✓ CODIGO >= 5 linhas (71)
   ✓ itens ⇢ derivado: 32 marcados = 32 documentados nas notas
@@ -488,7 +492,7 @@ conteúdo só sai com leitura.
 │   ├── PRD.md                       problema, escopo, requisitos, métricas, riscos
 │   ├── RFC.md                       proposta técnica, alternativas, questões em aberto
 │   ├── FDD.md                       contratos, fluxos, erros, integração com o código
-│   ├── TRACKER.md                   rastreabilidade item a item (373 linhas, cobertura 100% dos 122 itens rotulados)
+│   ├── TRACKER.md                   rastreabilidade item a item (372 linhas, cobertura 100% dos 122 itens rotulados)
 │   └── adrs/
 │       ├── README.md                índice das decisões
 │       ├── ADR-001-outbox-no-mysql.md

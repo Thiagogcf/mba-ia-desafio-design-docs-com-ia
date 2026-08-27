@@ -288,7 +288,6 @@ abre a coluna *Conteúdo*, em negrito.
 | RFC-RISK-03 | docs/RFC.md | Risco | Outbox cresce sem limite enquanto o arquivamento estiver fora de escopo | TRANSCRICAO | `[09:08] Diego` |
 | RFC-RISK-04 | docs/RFC.md | Risco | SLA de 10 s não fecha no pior caso: 2 s de polling + 10 s de timeout | TRANSCRICAO | `[09:42] Diego` |
 | RFC-RISK-05 | docs/RFC.md | Risco | Secret precisa ficar recuperável em claro para recomputar o HMAC | TRANSCRICAO | `[09:21] Bruno` |
-| RFC-RISK-06 | docs/RFC.md | Restrição | Cada risco de arquitetura aponta a decisão que reabre, se materializar | TRANSCRICAO | `[09:50] Larissa` |
 
 ---
 
@@ -657,9 +656,9 @@ Ou seja: os 94 itens que a call gerou estão todos endereçados em algum documen
 
 Um segundo corte, agora por **fala** e não por item, mostra o mesmo de outro ângulo. A transcrição
 tem 151 turnos, que se reduzem a 128 pares distintos `[hh:mm] Nome`. Tirando saudações, "beleza",
-"concordo" e frases de transição de pauta, sobram 120 pares com conteúdo próprio. Desses, **82 (68%)
+"concordo" e frases de transição de pauta, sobram 120 pares com conteúdo próprio. Desses, **84 (70%)
 são citados na forma `[hh:mm] Nome`**; contando também a forma corrente no texto ("Sofia decidiu…
-[09:21]"), são **92 (76%)**. Os 29 que sobram caem todos em três baldes: pergunta cuja
+[09:21]"), são **93 (77%)**. Os 27 que sobram caem todos em três baldes: pergunta cuja
 resposta está citada (Marcos pergunta o formato do payload em `[09:43]` e a resposta de Diego, no
 mesmo minuto, está no FDD), concordância com o que outra pessoa acabou de dizer, e mudança de
 assunto. Nenhum deles carrega informação que não tenha entrado no pacote por outra via.
@@ -668,12 +667,12 @@ assunto. Nenhum deles carrega informação que não tenha entrado no pacote por 
 
 | O desafio pede | Estado |
 | --- | --- |
-| Colunas `ID · Documento · Tipo · Conteúdo (resumo) · Fonte · Localização` | Presentes nas 22 subtabelas, sem variação |
+| Colunas `ID · Documento · Tipo · Conteúdo (resumo) · Fonte · Localização` | Presentes nas 23 subtabelas, sem variação |
 | Cobrir ≥ 80% dos itens identificáveis | 122 de 122 — o divisor está declarado no topo deste arquivo |
-| ≥ 70% das linhas com `TRANSCRICAO` e timestamp `[hh:mm] Nome` | 302 de 373, ou 80% |
+| ≥ 70% das linhas com `TRANSCRICAO` e timestamp `[hh:mm] Nome` | 301 de 372, ou 80% |
 | ≥ 5 linhas com `CODIGO` e caminho real | **71** linhas, apontando **30** arquivos distintos |
-| Timestamps que existam mesmo na transcrição | **82** pares distintos no pacote (79 deles nesta tabela), todos conferidos por script — zero inválidos |
-| Caminhos de arquivo que existam mesmo | 45 conferidos; `src/worker.ts` e `src/modules/webhooks/` aparecem sempre rotulados como arquivos a criar |
+| Timestamps que existam mesmo na transcrição | **84** pares distintos no pacote (79 deles nesta tabela), todos conferidos por script — zero inválidos |
+| Caminhos de arquivo que existam mesmo | 44 conferidos; `src/worker.ts` e `src/modules/webhooks/` aparecem sempre rotulados como arquivos a criar |
 | Nada registrado sem origem identificável | 32 itens não vêm de citação direta. Cada um leva o marcador `⇢ derivado`, a decisão de onde decorre e o motivo, em [Itens derivados](#itens-derivados). Nenhum se apresenta como fala de alguém |
 | Nada que contradiga a transcrição ou o código | Duas rodadas de auditoria adversarial; o que apareceu foi consertado no documento, e o histórico está no [README](../README.md#iterações-e-ajustes) |
 
@@ -683,9 +682,9 @@ Números conferidos automaticamente por [`scripts/validate-docs.sh`](../scripts/
 
 | Métrica | Valor | Exigência do desafio |
 | --- | --- | --- |
-| Linhas de rastreabilidade | **373** | — |
-| Fonte = `TRANSCRICAO` | **302** (80%) | ≥ 70% |
+| Linhas de rastreabilidade | **372** | — |
+| Fonte = `TRANSCRICAO` | **301** (80%) | ≥ 70% |
 | Fonte = `CODIGO` | **71** (19%), em 30 arquivos distintos | ≥ 5 linhas |
 | Linhas sem *Localização* | **0** | — |
 | Itens marcados `⇢ derivado` | **32** — todos listados em [Itens derivados](#itens-derivados) | — |
-| Pares `[hh:mm] Nome` existentes na transcrição | **82 de 82** no pacote, **79** nesta tabela — existência verificada por script; **fidelidade do conteúdo verificada por leitura**, não pelo script | — |
+| Pares `[hh:mm] Nome` existentes na transcrição | **84 de 84** no pacote, **79** nesta tabela — existência verificada por script; **fidelidade do conteúdo verificada por leitura**, não pelo script | — |
