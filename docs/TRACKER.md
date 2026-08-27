@@ -48,9 +48,15 @@ tempo, melhorando o percentual sem melhorar a rastreabilidade de nada.
 | Percentual | **100%** — o desafio exige 80% |
 
 O cruzamento é feito por **busca textual, não por leitura**: o identificador do documento aparece
-literal na linha correspondente. `RF-01` está dentro de `PRD-RF-01`; `D1` abre o conteúdo de
-`PRD-DEP-01`; `§6.1` abre o de `FDD-CONTRATO-01`. Quem quiser conferir usa `grep`, não confiança —
-e [`scripts/validate-docs.sh`](../scripts/validate-docs.sh) falha se a cobertura cair abaixo de 80%.
+literal na linha correspondente — `RF-01`, `D1`, `§6.1`, `OT-1`. Quem quiser conferir usa `grep`, e
+[`scripts/validate-docs.sh`](../scripts/validate-docs.sh) falha se a cobertura cair abaixo de 80%.
+
+**A relação é de um item do documento para uma ou mais linhas daqui**, não um para um. Quando um
+item do PRD reúne duas ideias com origens distintas, ele vira duas linhas, cada uma com a sua fonte:
+`RNF-04` (limite de 64 KB) aparece em `PRD-RNF-05` e `PRD-RNF-06` porque a regra é de Larissa
+([09:24]) e a preferência por erro em vez de truncamento é de Sofia ([09:23]). Por isso o número da
+linha (`PRD-RNF-06`) **não** corresponde ao número do item (`RNF-06`): o rótulo verdadeiro é o que
+abre a coluna *Conteúdo*, em negrito.
 
 ---
 
@@ -106,15 +112,15 @@ e [`scripts/validate-docs.sh`](../scripts/validate-docs.sh) falha se a cobertura
 
 | ID | Documento | Tipo | Conteúdo (resumo) | Fonte | Localização |
 | --- | --- | --- | --- | --- | --- |
-| PRD-OUT-01 | docs/PRD.md | Exclusão (adiado) | F1 — alerta por e-mail ao cliente: "Email tá fora de escopo dessa fase" | TRANSCRICAO | `[09:37] Larissa` |
-| PRD-OUT-02 | docs/PRD.md | Exclusão (descartado) | F2 — dashboard/painel visual: "Não, agora não. Só endpoints" | TRANSCRICAO | `[09:40] Larissa` |
-| PRD-OUT-03 | docs/PRD.md | Exclusão (adiado) | F3 — rate limiting de saída: "observar e decidir depois" | TRANSCRICAO | `[09:39] Larissa` |
-| PRD-OUT-04 | docs/PRD.md | Exclusão | F4 — arquivamento de linhas entregues (~30 dias) declarado fora do escopo | TRANSCRICAO | `[09:08] Diego` |
-| PRD-OUT-05 | docs/PRD.md | Exclusão | F5 — webhooks inbound: "Só saindo da gente pra eles" | TRANSCRICAO | `[09:02] Marcos` |
-| PRD-OUT-06 | docs/PRD.md | Exclusão (adiado) | F6 — ordenação global e múltiplos workers: "problema do futuro" | TRANSCRICAO | `[09:13] Diego` |
-| PRD-OUT-07 | docs/PRD.md | Limitação conhecida | **F7** — F6 — Larissa registra ordenação global como limitação documentada | TRANSCRICAO | `[09:13] Larissa` |
-| PRD-OUT-08 | docs/PRD.md | Exclusão (descartado) | **F8** — F7 — exactly-once descartado por exigir coordenação dos dois lados | TRANSCRICAO | `[09:25] Diego` |
-| PRD-OUT-09 | docs/PRD.md | Exclusão (adiado) | F8 — endurecimento de papéis no CRUD: "Por enquanto sim. Mais pra frente a gente pode endurecer" | TRANSCRICAO | `[09:37] Sofia` |
+| PRD-OUT-01 | docs/PRD.md | Exclusão (adiado) | **F1** — alerta por e-mail ao cliente: "Email tá fora de escopo dessa fase" | TRANSCRICAO | `[09:37] Larissa` |
+| PRD-OUT-02 | docs/PRD.md | Exclusão (descartado) | **F2** — dashboard/painel visual: "Não, agora não. Só endpoints" | TRANSCRICAO | `[09:40] Larissa` |
+| PRD-OUT-03 | docs/PRD.md | Exclusão (adiado) | **F3** — rate limiting de saída: "observar e decidir depois" | TRANSCRICAO | `[09:39] Larissa` |
+| PRD-OUT-04 | docs/PRD.md | Exclusão | **F4** — arquivamento de linhas entregues (~30 dias) declarado fora do escopo | TRANSCRICAO | `[09:08] Diego` |
+| PRD-OUT-05 | docs/PRD.md | Exclusão | **F5** — webhooks inbound: "Só saindo da gente pra eles" | TRANSCRICAO | `[09:02] Marcos` |
+| PRD-OUT-06 | docs/PRD.md | Exclusão (adiado) | **F6** — ordenação global e múltiplos workers: "problema do futuro" | TRANSCRICAO | `[09:13] Diego` |
+| PRD-OUT-07 | docs/PRD.md | Limitação conhecida | **F6** — Larissa registra ordenação global como limitação documentada | TRANSCRICAO | `[09:13] Larissa` |
+| PRD-OUT-08 | docs/PRD.md | Exclusão (descartado) | **F7** — exactly-once descartado por exigir coordenação dos dois lados | TRANSCRICAO | `[09:25] Diego` |
+| PRD-OUT-09 | docs/PRD.md | Exclusão (adiado) | **F8** — endurecimento de papéis no CRUD: "Por enquanto sim. Mais pra frente a gente pode endurecer" | TRANSCRICAO | `[09:37] Sofia` |
 
 ### 1.5 Requisitos funcionais
 
@@ -139,25 +145,25 @@ e [`scripts/validate-docs.sh`](../scripts/validate-docs.sh) falha se a cobertura
 
 | ID | Documento | Tipo | Conteúdo (resumo) | Fonte | Localização |
 | --- | --- | --- | --- | --- | --- |
-| PRD-RNF-01 | docs/PRD.md | Requisito Não Funcional | Latência de notificação abaixo de 10 segundos | TRANSCRICAO | `[09:02] Marcos` |
-| PRD-RNF-02 | docs/PRD.md | Requisito Não Funcional | Polling do worker a cada 2 segundos | TRANSCRICAO | `[09:09] Diego` |
-| PRD-RNF-03 | docs/PRD.md | Restrição | Latência mínima de 2 s no pior caso, aceita explicitamente | TRANSCRICAO | `[09:10] Larissa` |
-| PRD-RNF-04 | docs/PRD.md | Requisito Não Funcional | Timeout de 10 segundos na chamada HTTP ao cliente | TRANSCRICAO | `[09:42] Diego` |
-| PRD-RNF-05 | docs/PRD.md | Requisito Não Funcional | Limite de payload de 64 KB, com erro (não truncamento) | TRANSCRICAO | `[09:24] Larissa` |
-| PRD-RNF-06 | docs/PRD.md | Restrição | Sofia é a favor de erro em vez de truncar payload grande | TRANSCRICAO | `[09:23] Sofia` |
-| PRD-RNF-07 | docs/PRD.md | Requisito Não Funcional | TLS obrigatório: apenas URLs `https` | TRANSCRICAO | `[09:23] Sofia` |
-| PRD-RNF-08 | docs/PRD.md | Requisito Não Funcional | Secret única por endpoint, jamais global | TRANSCRICAO | `[09:21] Sofia` |
-| PRD-RNF-09 | docs/PRD.md | Requisito Não Funcional | Rotação de secret com grace period de 24 h | TRANSCRICAO | `[09:22] Sofia` |
-| PRD-RNF-10 | docs/PRD.md | Requisito Não Funcional | Garantia de entrega *at-least-once* | TRANSCRICAO | `[09:24] Diego` |
-| PRD-RNF-11 | docs/PRD.md | Requisito Não Funcional | Ordenação garantida por pedido enquanto houver worker único | TRANSCRICAO | `[09:12] Diego` |
-| PRD-RNF-12 | docs/PRD.md | Requisito Não Funcional | Entrega de webhook nunca bloqueia a mudança de status | TRANSCRICAO | `[09:04] Bruno` |
-| PRD-RNF-13 | docs/PRD.md | Requisito Não Funcional | Worker em processo separado da API | TRANSCRICAO | `[09:11] Diego` |
-| PRD-RNF-14 | docs/PRD.md | Requisito Não Funcional | Auditoria: replay registra quem o executou | TRANSCRICAO | `[09:36] Sofia` |
-| PRD-RNF-15 | docs/PRD.md | Requisito Não Funcional | CRUD exige autenticação (qualquer papel nesta fase); replay exige `ADMIN` | TRANSCRICAO | `[09:36] Larissa` |
-| PRD-RNF-16 | docs/PRD.md | Requisito Não Funcional | Códigos de erro com prefixo `WEBHOOK_` | TRANSCRICAO | `[09:29] Larissa` |
-| PRD-RNF-17 | docs/PRD.md | Requisito Não Funcional | Reuso máximo dos padrões existentes do projeto | TRANSCRICAO | `[09:30] Larissa` |
-| PRD-RNF-18 | docs/PRD.md | Requisito Não Funcional | Nenhuma infraestrutura nova | TRANSCRICAO | `[09:07] Diego` |
-| PRD-RNF-19 | docs/PRD.md | Requisito Não Funcional | Evento reflete o estado do pedido no momento da mudança (snapshot) | TRANSCRICAO | `[09:52] Larissa` |
+| PRD-RNF-01 | docs/PRD.md | Requisito Não Funcional | **RNF-01** — Latência de notificação abaixo de 10 segundos | TRANSCRICAO | `[09:02] Marcos` |
+| PRD-RNF-02 | docs/PRD.md | Requisito Não Funcional | **RNF-02** — Polling do worker a cada 2 segundos | TRANSCRICAO | `[09:09] Diego` |
+| PRD-RNF-03 | docs/PRD.md | Restrição | **RNF-02** — Latência mínima de 2 s no pior caso, aceita explicitamente | TRANSCRICAO | `[09:10] Larissa` |
+| PRD-RNF-04 | docs/PRD.md | Requisito Não Funcional | **RNF-03** — Timeout de 10 segundos na chamada HTTP ao cliente | TRANSCRICAO | `[09:42] Diego` |
+| PRD-RNF-05 | docs/PRD.md | Requisito Não Funcional | **RNF-04** — Limite de payload de 64 KB, com erro (não truncamento) | TRANSCRICAO | `[09:24] Larissa` |
+| PRD-RNF-06 | docs/PRD.md | Restrição | **RNF-04** — Sofia é a favor de erro em vez de truncar payload grande | TRANSCRICAO | `[09:23] Sofia` |
+| PRD-RNF-07 | docs/PRD.md | Requisito Não Funcional | **RNF-05** — TLS obrigatório: apenas URLs `https` | TRANSCRICAO | `[09:23] Sofia` |
+| PRD-RNF-08 | docs/PRD.md | Requisito Não Funcional | **RNF-06** — Secret única por endpoint, jamais global | TRANSCRICAO | `[09:21] Sofia` |
+| PRD-RNF-09 | docs/PRD.md | Requisito Não Funcional | **RNF-07** — Rotação de secret com grace period de 24 h | TRANSCRICAO | `[09:22] Sofia` |
+| PRD-RNF-10 | docs/PRD.md | Requisito Não Funcional | **RNF-08** — Garantia de entrega *at-least-once* | TRANSCRICAO | `[09:24] Diego` |
+| PRD-RNF-11 | docs/PRD.md | Requisito Não Funcional | **RNF-09** — Ordenação garantida por pedido enquanto houver worker único | TRANSCRICAO | `[09:12] Diego` |
+| PRD-RNF-12 | docs/PRD.md | Requisito Não Funcional | **RNF-10** — Entrega de webhook nunca bloqueia a mudança de status | TRANSCRICAO | `[09:04] Bruno` |
+| PRD-RNF-13 | docs/PRD.md | Requisito Não Funcional | **RNF-11** — Worker em processo separado da API | TRANSCRICAO | `[09:11] Diego` |
+| PRD-RNF-14 | docs/PRD.md | Requisito Não Funcional | **RNF-12** — Auditoria: replay registra quem o executou | TRANSCRICAO | `[09:36] Sofia` |
+| PRD-RNF-15 | docs/PRD.md | Requisito Não Funcional | **RNF-13** — CRUD exige autenticação (qualquer papel nesta fase); replay exige `ADMIN` | TRANSCRICAO | `[09:36] Larissa` |
+| PRD-RNF-16 | docs/PRD.md | Requisito Não Funcional | **RNF-14** — Códigos de erro com prefixo `WEBHOOK_` | TRANSCRICAO | `[09:29] Larissa` |
+| PRD-RNF-17 | docs/PRD.md | Requisito Não Funcional | **RNF-14** — Reuso máximo dos padrões existentes do projeto | TRANSCRICAO | `[09:30] Larissa` |
+| PRD-RNF-18 | docs/PRD.md | Requisito Não Funcional | **RNF-15** — Nenhuma infraestrutura nova | TRANSCRICAO | `[09:07] Diego` |
+| PRD-RNF-19 | docs/PRD.md | Requisito Não Funcional | **RNF-16** — Evento reflete o estado do pedido no momento da mudança (snapshot) | TRANSCRICAO | `[09:52] Larissa` |
 
 ### 1.7 Decisões, dependências e riscos
 
@@ -173,16 +179,16 @@ e [`scripts/validate-docs.sh`](../scripts/validate-docs.sh) falha se a cobertura
 | PRD-DEC-08 | docs/PRD.md | Decisão / Trade-off | Reuso de padrões: velocidade, ao custo de modelagem sob medida | TRANSCRICAO | `[09:30] Larissa` |
 | PRD-DEC-09 | docs/PRD.md | Decisão / Trade-off | Snapshot do payload: fidelidade histórica, ao custo de dado defasado | TRANSCRICAO | `[09:52] Larissa` |
 | PRD-DEP-01 | docs/PRD.md | Dependência | **D1** — Banco MySQL existente hospeda a outbox; sem infraestrutura nova | TRANSCRICAO | `[09:07] Diego` |
-| PRD-DEP-02 | docs/PRD.md | Dependência | **D2** — Worker usa a mesma `DATABASE_URL`, com `PrismaClient` próprio | TRANSCRICAO | `[09:30] Bruno` |
-| PRD-DEP-03 | docs/PRD.md | Dependência | **D3** — Ponto de integração no `changeStatus` do módulo de pedidos | CODIGO | `src/modules/orders/order.service.ts` |
-| PRD-DEP-04 | docs/PRD.md | Dependência | **D4** — Reuso do `requireRole` existente para exigir `ADMIN` no replay | CODIGO | `src/middlewares/auth.middleware.ts` |
-| PRD-DEP-05 | docs/PRD.md | Dependência | **D5** — Reuso de `AppError`, Pino e error middleware sem alteração | TRANSCRICAO | `[09:29] Bruno` |
-| PRD-DEP-06 | docs/PRD.md | Dependência (bloqueante) | **D6** — Revisão de segurança da Sofia: mínimo 2 dias úteis antes do deploy | TRANSCRICAO | `[09:46] Sofia` |
-| PRD-DEP-07 | docs/PRD.md | Dependência (bloqueante) | **D7** — Sessão de revisão do design com Bruno e Diego antes de codar | TRANSCRICAO | `[09:50] Larissa` |
-| PRD-DEP-08 | docs/PRD.md | Dependência | **D8** — Documentação da integração no portal do desenvolvedor | TRANSCRICAO | `[09:40] Marcos` |
-| PRD-DEP-09 | docs/PRD.md | Dependência | **D9** — Documentação destacada da garantia at-least-once no portal | TRANSCRICAO | `[09:26] Marcos` |
-| PRD-DEP-10 | docs/PRD.md | Dependência | Confirmação de prazo com a Atlas | TRANSCRICAO | `[09:47] Marcos` |
-| PRD-DEP-11 | docs/PRD.md | Dependência | Capacidade do time: 3 sprints com a quebra estimada por Larissa | TRANSCRICAO | `[09:46] Larissa` |
+| PRD-DEP-02 | docs/PRD.md | Dependência | **D1** — Worker usa a mesma `DATABASE_URL`, com `PrismaClient` próprio | TRANSCRICAO | `[09:30] Bruno` |
+| PRD-DEP-03 | docs/PRD.md | Dependência | **D2** — Ponto de integração no `changeStatus` do módulo de pedidos | CODIGO | `src/modules/orders/order.service.ts` |
+| PRD-DEP-04 | docs/PRD.md | Dependência | **D3** — Reuso do `requireRole` existente para exigir `ADMIN` no replay | CODIGO | `src/middlewares/auth.middleware.ts` |
+| PRD-DEP-05 | docs/PRD.md | Dependência | **D4** — Reuso de `AppError`, Pino e error middleware sem alteração | TRANSCRICAO | `[09:29] Bruno` |
+| PRD-DEP-06 | docs/PRD.md | Dependência (bloqueante) | **D5** — Revisão de segurança da Sofia: mínimo 2 dias úteis antes do deploy | TRANSCRICAO | `[09:46] Sofia` |
+| PRD-DEP-07 | docs/PRD.md | Dependência (bloqueante) | **D6** — Sessão de revisão do design com Bruno e Diego antes de codar | TRANSCRICAO | `[09:50] Larissa` |
+| PRD-DEP-08 | docs/PRD.md | Dependência | **D7** — Documentação da integração no portal do desenvolvedor | TRANSCRICAO | `[09:40] Marcos` |
+| PRD-DEP-09 | docs/PRD.md | Dependência | **D7** — Documentação destacada da garantia at-least-once no portal | TRANSCRICAO | `[09:26] Marcos` |
+| PRD-DEP-10 | docs/PRD.md | Dependência | **D8** — Confirmação de prazo com a Atlas | TRANSCRICAO | `[09:47] Marcos` |
+| PRD-DEP-11 | docs/PRD.md | Dependência | **D9** — Capacidade do time: 3 sprints com a quebra estimada por Larissa | TRANSCRICAO | `[09:46] Larissa` |
 | PRD-RISK-01 | docs/PRD.md | Risco | R1 — perder a Atlas por atraso (prob. Média / impacto Alto) | TRANSCRICAO | `[09:00] Marcos` |
 | PRD-RISK-02 | docs/PRD.md | Risco | R2 — vazamento de secret pelo cliente (prob. Média / impacto Alto) | TRANSCRICAO | `[09:22] Diego` |
 | PRD-RISK-03 | docs/PRD.md | Risco | R3 — cliente processar evento duplicado (prob. Média / impacto Médio) | TRANSCRICAO | `[09:25] Sofia` |
@@ -651,8 +657,9 @@ Ou seja: os 94 itens que a call gerou estão todos endereçados em algum documen
 
 Um segundo corte, agora por **fala** e não por item, mostra o mesmo de outro ângulo. A transcrição
 tem 151 turnos, que se reduzem a 128 pares distintos `[hh:mm] Nome`. Tirando saudações, "beleza",
-"concordo" e frases de transição de pauta, sobram 120 pares com conteúdo próprio — e **91 deles
-(75%) são citados** em algum documento. Os 29 que sobram caem todos em três baldes: pergunta cuja
+"concordo" e frases de transição de pauta, sobram 120 pares com conteúdo próprio. Desses, **82 (68%)
+são citados na forma `[hh:mm] Nome`**; contando também a forma corrente no texto ("Sofia decidiu…
+[09:21]"), são **92 (76%)**. Os 29 que sobram caem todos em três baldes: pergunta cuja
 resposta está citada (Marcos pergunta o formato do payload em `[09:43]` e a resposta de Diego, no
 mesmo minuto, está no FDD), concordância com o que outra pessoa acabou de dizer, e mudança de
 assunto. Nenhum deles carrega informação que não tenha entrado no pacote por outra via.
@@ -664,8 +671,8 @@ assunto. Nenhum deles carrega informação que não tenha entrado no pacote por 
 | Colunas `ID · Documento · Tipo · Conteúdo (resumo) · Fonte · Localização` | Presentes nas 22 subtabelas, sem variação |
 | Cobrir ≥ 80% dos itens identificáveis | 122 de 122 — o divisor está declarado no topo deste arquivo |
 | ≥ 70% das linhas com `TRANSCRICAO` e timestamp `[hh:mm] Nome` | 302 de 373, ou 80% |
-| ≥ 5 linhas com `CODIGO` e caminho real | 71 linhas, apontando 26 arquivos distintos |
-| Timestamps que existam mesmo na transcrição | 82 pares distintos, todos conferidos por script |
+| ≥ 5 linhas com `CODIGO` e caminho real | **71** linhas, apontando **30** arquivos distintos |
+| Timestamps que existam mesmo na transcrição | **82** pares distintos no pacote (79 deles nesta tabela), todos conferidos por script — zero inválidos |
 | Caminhos de arquivo que existam mesmo | 45 conferidos; `src/worker.ts` e `src/modules/webhooks/` aparecem sempre rotulados como arquivos a criar |
 | Nada registrado sem origem identificável | 32 itens não vêm de citação direta. Cada um leva o marcador `⇢ derivado`, a decisão de onde decorre e o motivo, em [Itens derivados](#itens-derivados). Nenhum se apresenta como fala de alguém |
 | Nada que contradiga a transcrição ou o código | Duas rodadas de auditoria adversarial; o que apareceu foi consertado no documento, e o histórico está no [README](../README.md#iterações-e-ajustes) |
@@ -678,7 +685,7 @@ Números conferidos automaticamente por [`scripts/validate-docs.sh`](../scripts/
 | --- | --- | --- |
 | Linhas de rastreabilidade | **373** | — |
 | Fonte = `TRANSCRICAO` | **302** (80%) | ≥ 70% |
-| Fonte = `CODIGO` | **71** (19%) | ≥ 5 linhas |
+| Fonte = `CODIGO` | **71** (19%), em 30 arquivos distintos | ≥ 5 linhas |
 | Linhas sem *Localização* | **0** | — |
 | Itens marcados `⇢ derivado` | **32** — todos listados em [Itens derivados](#itens-derivados) | — |
-| Pares `[hh:mm] Nome` existentes na transcrição | **82 de 82** — existência verificada por script; **fidelidade do conteúdo verificada por leitura**, não pelo script | — |
+| Pares `[hh:mm] Nome` existentes na transcrição | **82 de 82** no pacote, **79** nesta tabela — existência verificada por script; **fidelidade do conteúdo verificada por leitura**, não pelo script | — |

@@ -489,7 +489,7 @@ conteúdo só sai com leitura.
 │   ├── PRD.md                       problema, escopo, requisitos, métricas, riscos
 │   ├── RFC.md                       proposta técnica, alternativas, questões em aberto
 │   ├── FDD.md                       contratos, fluxos, erros, integração com o código
-│   ├── TRACKER.md                   rastreabilidade item a item (373 linhas, cobertura 100%)
+│   ├── TRACKER.md                   rastreabilidade item a item (373 linhas, cobertura 100% dos 122 itens rotulados)
 │   ├── ENUNCIADO.md                 enunciado original do desafio
 │   └── adrs/
 │       ├── README.md                índice das decisões
