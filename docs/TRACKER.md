@@ -21,10 +21,36 @@ documento.
 
 Alguns itens não são citação direta, mas **consequência necessária** de uma decisão que foi tomada —
 ou detalhes de especificação que a reunião não fechou. Eles aparecem com o marcador
-**`⇢ derivado`** no resumo, e a coluna *Localização* aponta para a decisão-mãe. São **31 itens**,
+**`⇢ derivado`** no resumo, e a coluna *Localização* aponta para a decisão-mãe. São **32 itens**,
 **todos** listados em [Itens derivados](#itens-derivados) ao final, com a justificativa de por que
 não são citação literal. Nenhum item do pacote está sem origem, e a contagem é verificada
 automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
+
+## O denominador: o que este tracker trata como item
+
+O desafio pede que "pelo menos 80% dos itens identificáveis nos seus documentos" apareçam aqui. Esse
+número só significa alguma coisa se o divisor estiver escrito. Escolher o divisor depois de contar é
+uma forma silenciosa de garantir qualquer percentual que se queira, então ele fica declarado antes.
+
+**É item** tudo o que os próprios documentos já isolaram com um identificador: `O1`–`O6`, `E1`–`E8`,
+`F1`–`F8`, `RF-01`–`RF-14`, `RNF-01`–`RNF-16`, `D1`–`D9` e `R1`–`R8` no PRD; `Q1`–`Q8` no RFC;
+`OT-1`–`OT-7`, `RT-1`–`RT-10`, os contratos `§6.1`–`§6.8` e cada código `WEBHOOK_*` no FDD; e cada
+uma das sete ADRs.
+
+**Não é item** o texto que explica, justifica ou exemplifica um desses — nem a repetição de um item
+já identificado em outro documento. Contar as repetições inflaria o divisor e o dividendo ao mesmo
+tempo, melhorando o percentual sem melhorar a rastreabilidade de nada.
+
+| | |
+| --- | --- |
+| Itens identificáveis nos documentos | **122** |
+| Itens com linha nesta tabela | **122** |
+| Percentual | **100%** — o desafio exige 80% |
+
+O cruzamento é feito por **busca textual, não por leitura**: o identificador do documento aparece
+literal na linha correspondente. `RF-01` está dentro de `PRD-RF-01`; `D1` abre o conteúdo de
+`PRD-DEP-01`; `§6.1` abre o de `FDD-CONTRATO-01`. Quem quiser conferir usa `grep`, não confiança —
+e [`scripts/validate-docs.sh`](../scripts/validate-docs.sh) falha se a cobertura cair abaixo de 80%.
 
 ---
 
@@ -86,52 +112,52 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | PRD-OUT-04 | docs/PRD.md | Exclusão | F4 — arquivamento de linhas entregues (~30 dias) declarado fora do escopo | TRANSCRICAO | `[09:08] Diego` |
 | PRD-OUT-05 | docs/PRD.md | Exclusão | F5 — webhooks inbound: "Só saindo da gente pra eles" | TRANSCRICAO | `[09:02] Marcos` |
 | PRD-OUT-06 | docs/PRD.md | Exclusão (adiado) | F6 — ordenação global e múltiplos workers: "problema do futuro" | TRANSCRICAO | `[09:13] Diego` |
-| PRD-OUT-07 | docs/PRD.md | Limitação conhecida | F6 — Larissa registra ordenação global como limitação documentada | TRANSCRICAO | `[09:13] Larissa` |
-| PRD-OUT-08 | docs/PRD.md | Exclusão (descartado) | F7 — exactly-once descartado por exigir coordenação dos dois lados | TRANSCRICAO | `[09:25] Diego` |
+| PRD-OUT-07 | docs/PRD.md | Limitação conhecida | **F7** — F6 — Larissa registra ordenação global como limitação documentada | TRANSCRICAO | `[09:13] Larissa` |
+| PRD-OUT-08 | docs/PRD.md | Exclusão (descartado) | **F8** — F7 — exactly-once descartado por exigir coordenação dos dois lados | TRANSCRICAO | `[09:25] Diego` |
 | PRD-OUT-09 | docs/PRD.md | Exclusão (adiado) | F8 — endurecimento de papéis no CRUD: "Por enquanto sim. Mais pra frente a gente pode endurecer" | TRANSCRICAO | `[09:37] Sofia` |
 
 ### 1.5 Requisitos funcionais
 
 | ID | Documento | Tipo | Conteúdo (resumo) | Fonte | Localização |
 | --- | --- | --- | --- | --- | --- |
-| PRD-FR-01 | docs/PRD.md | Requisito Funcional | Cadastrar webhook com URL, `customer_id` e lista de status; secret gerada pela plataforma | TRANSCRICAO | `[09:31] Marcos` |
-| PRD-FR-02 | docs/PRD.md | Requisito Funcional | Editar webhook (`PATCH`) | TRANSCRICAO | `[09:33] Bruno` |
-| PRD-FR-03 | docs/PRD.md | Requisito Funcional | Remover webhook (`DELETE`) | TRANSCRICAO | `[09:33] Bruno` |
-| PRD-FR-04 | docs/PRD.md | Requisito Funcional | Listar webhooks de um customer (`GET`) | TRANSCRICAO | `[09:33] Bruno` |
-| PRD-FR-05 | docs/PRD.md | Requisito Funcional | Filtro de eventos por endpoint, aplicado na inserção da outbox | TRANSCRICAO | `[09:34] Bruno` |
-| PRD-FR-06 | docs/PRD.md | Requisito Funcional | Registro do evento atômico com a mudança de status; falha causa rollback | TRANSCRICAO | `[09:40] Bruno` |
-| PRD-FR-07 | docs/PRD.md | Requisito Funcional | Entrega por HTTP assinado com headers de identificação e assinatura | TRANSCRICAO | `[09:44] Diego` |
-| PRD-FR-08 | docs/PRD.md | Requisito Funcional | Retentativa automática: 5 tentativas, backoff 1m/5m/30m/2h/12h | TRANSCRICAO | `[09:17] Diego` |
-| PRD-FR-09 | docs/PRD.md | Requisito Funcional | Falhas permanentes registradas em DLQ com payload, motivo e timestamp | TRANSCRICAO | `[09:18] Diego` |
-| PRD-FR-10 | docs/PRD.md | Requisito Funcional | Replay manual de DLQ por `ADMIN`, com registro de autoria | TRANSCRICAO | `[09:35] Diego` |
-| PRD-FR-11 | docs/PRD.md | Requisito Funcional | Consulta do histórico de entregas (sucesso/falha, payload, response, tempo) | TRANSCRICAO | `[09:34] Marcos` |
-| PRD-FR-12 | docs/PRD.md | Requisito Funcional | Rotação de secret via API, com 24 h de convivência | TRANSCRICAO | `[09:21] Sofia` |
-| PRD-FR-13 | docs/PRD.md | Requisito Funcional | Estado ativo/inativo no cadastro; efeito sobre a materialização de eventos ⇢ derivado | TRANSCRICAO | `[09:21] Bruno` |
-| PRD-FR-14 | docs/PRD.md | Requisito Funcional | Recusar URL que não seja `https`, com erro de validação | TRANSCRICAO | `[09:23] Sofia` |
+| PRD-RF-01 | docs/PRD.md | Requisito Funcional | Cadastrar webhook com URL, `customer_id` e lista de status; secret gerada pela plataforma | TRANSCRICAO | `[09:31] Marcos` |
+| PRD-RF-02 | docs/PRD.md | Requisito Funcional | Editar webhook (`PATCH`) | TRANSCRICAO | `[09:33] Bruno` |
+| PRD-RF-03 | docs/PRD.md | Requisito Funcional | Remover webhook (`DELETE`) | TRANSCRICAO | `[09:33] Bruno` |
+| PRD-RF-04 | docs/PRD.md | Requisito Funcional | Listar webhooks de um customer (`GET`) | TRANSCRICAO | `[09:33] Bruno` |
+| PRD-RF-05 | docs/PRD.md | Requisito Funcional | Filtro de eventos por endpoint, aplicado na inserção da outbox | TRANSCRICAO | `[09:34] Bruno` |
+| PRD-RF-06 | docs/PRD.md | Requisito Funcional | Registro do evento atômico com a mudança de status; falha causa rollback | TRANSCRICAO | `[09:40] Bruno` |
+| PRD-RF-07 | docs/PRD.md | Requisito Funcional | Entrega por HTTP assinado com headers de identificação e assinatura | TRANSCRICAO | `[09:44] Diego` |
+| PRD-RF-08 | docs/PRD.md | Requisito Funcional | Retentativa automática: 5 tentativas, backoff 1m/5m/30m/2h/12h | TRANSCRICAO | `[09:17] Diego` |
+| PRD-RF-09 | docs/PRD.md | Requisito Funcional | Falhas permanentes registradas em DLQ com payload, motivo e timestamp | TRANSCRICAO | `[09:18] Diego` |
+| PRD-RF-10 | docs/PRD.md | Requisito Funcional | Replay manual de DLQ por `ADMIN`, com registro de autoria | TRANSCRICAO | `[09:35] Diego` |
+| PRD-RF-11 | docs/PRD.md | Requisito Funcional | Consulta do histórico de entregas (sucesso/falha, payload, response, tempo) | TRANSCRICAO | `[09:34] Marcos` |
+| PRD-RF-12 | docs/PRD.md | Requisito Funcional | Rotação de secret via API, com 24 h de convivência | TRANSCRICAO | `[09:21] Sofia` |
+| PRD-RF-13 | docs/PRD.md | Requisito Funcional | Estado ativo/inativo no cadastro; efeito sobre a materialização de eventos ⇢ derivado | TRANSCRICAO | `[09:21] Bruno` |
+| PRD-RF-14 | docs/PRD.md | Requisito Funcional | Recusar URL que não seja `https`, com erro de validação | TRANSCRICAO | `[09:23] Sofia` |
 
 ### 1.6 Requisitos não funcionais
 
 | ID | Documento | Tipo | Conteúdo (resumo) | Fonte | Localização |
 | --- | --- | --- | --- | --- | --- |
-| PRD-NFR-01 | docs/PRD.md | Requisito Não Funcional | Latência de notificação abaixo de 10 segundos | TRANSCRICAO | `[09:02] Marcos` |
-| PRD-NFR-02 | docs/PRD.md | Requisito Não Funcional | Polling do worker a cada 2 segundos | TRANSCRICAO | `[09:09] Diego` |
-| PRD-NFR-03 | docs/PRD.md | Restrição | Latência mínima de 2 s no pior caso, aceita explicitamente | TRANSCRICAO | `[09:10] Larissa` |
-| PRD-NFR-04 | docs/PRD.md | Requisito Não Funcional | Timeout de 10 segundos na chamada HTTP ao cliente | TRANSCRICAO | `[09:42] Diego` |
-| PRD-NFR-05 | docs/PRD.md | Requisito Não Funcional | Limite de payload de 64 KB, com erro (não truncamento) | TRANSCRICAO | `[09:24] Larissa` |
-| PRD-NFR-06 | docs/PRD.md | Restrição | Sofia é a favor de erro em vez de truncar payload grande | TRANSCRICAO | `[09:23] Sofia` |
-| PRD-NFR-07 | docs/PRD.md | Requisito Não Funcional | TLS obrigatório: apenas URLs `https` | TRANSCRICAO | `[09:23] Sofia` |
-| PRD-NFR-08 | docs/PRD.md | Requisito Não Funcional | Secret única por endpoint, jamais global | TRANSCRICAO | `[09:21] Sofia` |
-| PRD-NFR-09 | docs/PRD.md | Requisito Não Funcional | Rotação de secret com grace period de 24 h | TRANSCRICAO | `[09:22] Sofia` |
-| PRD-NFR-10 | docs/PRD.md | Requisito Não Funcional | Garantia de entrega *at-least-once* | TRANSCRICAO | `[09:24] Diego` |
-| PRD-NFR-11 | docs/PRD.md | Requisito Não Funcional | Ordenação garantida por pedido enquanto houver worker único | TRANSCRICAO | `[09:12] Diego` |
-| PRD-NFR-12 | docs/PRD.md | Requisito Não Funcional | Entrega de webhook nunca bloqueia a mudança de status | TRANSCRICAO | `[09:04] Bruno` |
-| PRD-NFR-13 | docs/PRD.md | Requisito Não Funcional | Worker em processo separado da API | TRANSCRICAO | `[09:11] Diego` |
-| PRD-NFR-14 | docs/PRD.md | Requisito Não Funcional | Auditoria: replay registra quem o executou | TRANSCRICAO | `[09:36] Sofia` |
-| PRD-NFR-15 | docs/PRD.md | Requisito Não Funcional | CRUD exige autenticação (qualquer papel nesta fase); replay exige `ADMIN` | TRANSCRICAO | `[09:36] Larissa` |
-| PRD-NFR-16 | docs/PRD.md | Requisito Não Funcional | Códigos de erro com prefixo `WEBHOOK_` | TRANSCRICAO | `[09:29] Larissa` |
-| PRD-NFR-17 | docs/PRD.md | Requisito Não Funcional | Reuso máximo dos padrões existentes do projeto | TRANSCRICAO | `[09:30] Larissa` |
-| PRD-NFR-18 | docs/PRD.md | Requisito Não Funcional | Nenhuma infraestrutura nova | TRANSCRICAO | `[09:07] Diego` |
-| PRD-NFR-19 | docs/PRD.md | Requisito Não Funcional | Evento reflete o estado do pedido no momento da mudança (snapshot) | TRANSCRICAO | `[09:52] Larissa` |
+| PRD-RNF-01 | docs/PRD.md | Requisito Não Funcional | Latência de notificação abaixo de 10 segundos | TRANSCRICAO | `[09:02] Marcos` |
+| PRD-RNF-02 | docs/PRD.md | Requisito Não Funcional | Polling do worker a cada 2 segundos | TRANSCRICAO | `[09:09] Diego` |
+| PRD-RNF-03 | docs/PRD.md | Restrição | Latência mínima de 2 s no pior caso, aceita explicitamente | TRANSCRICAO | `[09:10] Larissa` |
+| PRD-RNF-04 | docs/PRD.md | Requisito Não Funcional | Timeout de 10 segundos na chamada HTTP ao cliente | TRANSCRICAO | `[09:42] Diego` |
+| PRD-RNF-05 | docs/PRD.md | Requisito Não Funcional | Limite de payload de 64 KB, com erro (não truncamento) | TRANSCRICAO | `[09:24] Larissa` |
+| PRD-RNF-06 | docs/PRD.md | Restrição | Sofia é a favor de erro em vez de truncar payload grande | TRANSCRICAO | `[09:23] Sofia` |
+| PRD-RNF-07 | docs/PRD.md | Requisito Não Funcional | TLS obrigatório: apenas URLs `https` | TRANSCRICAO | `[09:23] Sofia` |
+| PRD-RNF-08 | docs/PRD.md | Requisito Não Funcional | Secret única por endpoint, jamais global | TRANSCRICAO | `[09:21] Sofia` |
+| PRD-RNF-09 | docs/PRD.md | Requisito Não Funcional | Rotação de secret com grace period de 24 h | TRANSCRICAO | `[09:22] Sofia` |
+| PRD-RNF-10 | docs/PRD.md | Requisito Não Funcional | Garantia de entrega *at-least-once* | TRANSCRICAO | `[09:24] Diego` |
+| PRD-RNF-11 | docs/PRD.md | Requisito Não Funcional | Ordenação garantida por pedido enquanto houver worker único | TRANSCRICAO | `[09:12] Diego` |
+| PRD-RNF-12 | docs/PRD.md | Requisito Não Funcional | Entrega de webhook nunca bloqueia a mudança de status | TRANSCRICAO | `[09:04] Bruno` |
+| PRD-RNF-13 | docs/PRD.md | Requisito Não Funcional | Worker em processo separado da API | TRANSCRICAO | `[09:11] Diego` |
+| PRD-RNF-14 | docs/PRD.md | Requisito Não Funcional | Auditoria: replay registra quem o executou | TRANSCRICAO | `[09:36] Sofia` |
+| PRD-RNF-15 | docs/PRD.md | Requisito Não Funcional | CRUD exige autenticação (qualquer papel nesta fase); replay exige `ADMIN` | TRANSCRICAO | `[09:36] Larissa` |
+| PRD-RNF-16 | docs/PRD.md | Requisito Não Funcional | Códigos de erro com prefixo `WEBHOOK_` | TRANSCRICAO | `[09:29] Larissa` |
+| PRD-RNF-17 | docs/PRD.md | Requisito Não Funcional | Reuso máximo dos padrões existentes do projeto | TRANSCRICAO | `[09:30] Larissa` |
+| PRD-RNF-18 | docs/PRD.md | Requisito Não Funcional | Nenhuma infraestrutura nova | TRANSCRICAO | `[09:07] Diego` |
+| PRD-RNF-19 | docs/PRD.md | Requisito Não Funcional | Evento reflete o estado do pedido no momento da mudança (snapshot) | TRANSCRICAO | `[09:52] Larissa` |
 
 ### 1.7 Decisões, dependências e riscos
 
@@ -146,15 +172,15 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | PRD-DEC-07 | docs/PRD.md | Trade-off | Sofia registra a ressalva: "isso joga responsabilidade pro cliente" | TRANSCRICAO | `[09:25] Sofia` |
 | PRD-DEC-08 | docs/PRD.md | Decisão / Trade-off | Reuso de padrões: velocidade, ao custo de modelagem sob medida | TRANSCRICAO | `[09:30] Larissa` |
 | PRD-DEC-09 | docs/PRD.md | Decisão / Trade-off | Snapshot do payload: fidelidade histórica, ao custo de dado defasado | TRANSCRICAO | `[09:52] Larissa` |
-| PRD-DEP-01 | docs/PRD.md | Dependência | Banco MySQL existente hospeda a outbox; sem infraestrutura nova | TRANSCRICAO | `[09:07] Diego` |
-| PRD-DEP-02 | docs/PRD.md | Dependência | Worker usa a mesma `DATABASE_URL`, com `PrismaClient` próprio | TRANSCRICAO | `[09:30] Bruno` |
-| PRD-DEP-03 | docs/PRD.md | Dependência | Ponto de integração no `changeStatus` do módulo de pedidos | CODIGO | `src/modules/orders/order.service.ts` |
-| PRD-DEP-04 | docs/PRD.md | Dependência | Reuso do `requireRole` existente para exigir `ADMIN` no replay | CODIGO | `src/middlewares/auth.middleware.ts` |
-| PRD-DEP-05 | docs/PRD.md | Dependência | Reuso de `AppError`, Pino e error middleware sem alteração | TRANSCRICAO | `[09:29] Bruno` |
-| PRD-DEP-06 | docs/PRD.md | Dependência (bloqueante) | Revisão de segurança da Sofia: mínimo 2 dias úteis antes do deploy | TRANSCRICAO | `[09:46] Sofia` |
-| PRD-DEP-07 | docs/PRD.md | Dependência (bloqueante) | Sessão de revisão do design com Bruno e Diego antes de codar | TRANSCRICAO | `[09:50] Larissa` |
-| PRD-DEP-08 | docs/PRD.md | Dependência | Documentação da integração no portal do desenvolvedor | TRANSCRICAO | `[09:40] Marcos` |
-| PRD-DEP-09 | docs/PRD.md | Dependência | Documentação destacada da garantia at-least-once no portal | TRANSCRICAO | `[09:26] Marcos` |
+| PRD-DEP-01 | docs/PRD.md | Dependência | **D1** — Banco MySQL existente hospeda a outbox; sem infraestrutura nova | TRANSCRICAO | `[09:07] Diego` |
+| PRD-DEP-02 | docs/PRD.md | Dependência | **D2** — Worker usa a mesma `DATABASE_URL`, com `PrismaClient` próprio | TRANSCRICAO | `[09:30] Bruno` |
+| PRD-DEP-03 | docs/PRD.md | Dependência | **D3** — Ponto de integração no `changeStatus` do módulo de pedidos | CODIGO | `src/modules/orders/order.service.ts` |
+| PRD-DEP-04 | docs/PRD.md | Dependência | **D4** — Reuso do `requireRole` existente para exigir `ADMIN` no replay | CODIGO | `src/middlewares/auth.middleware.ts` |
+| PRD-DEP-05 | docs/PRD.md | Dependência | **D5** — Reuso de `AppError`, Pino e error middleware sem alteração | TRANSCRICAO | `[09:29] Bruno` |
+| PRD-DEP-06 | docs/PRD.md | Dependência (bloqueante) | **D6** — Revisão de segurança da Sofia: mínimo 2 dias úteis antes do deploy | TRANSCRICAO | `[09:46] Sofia` |
+| PRD-DEP-07 | docs/PRD.md | Dependência (bloqueante) | **D7** — Sessão de revisão do design com Bruno e Diego antes de codar | TRANSCRICAO | `[09:50] Larissa` |
+| PRD-DEP-08 | docs/PRD.md | Dependência | **D8** — Documentação da integração no portal do desenvolvedor | TRANSCRICAO | `[09:40] Marcos` |
+| PRD-DEP-09 | docs/PRD.md | Dependência | **D9** — Documentação destacada da garantia at-least-once no portal | TRANSCRICAO | `[09:26] Marcos` |
 | PRD-DEP-10 | docs/PRD.md | Dependência | Confirmação de prazo com a Atlas | TRANSCRICAO | `[09:47] Marcos` |
 | PRD-DEP-11 | docs/PRD.md | Dependência | Capacidade do time: 3 sprints com a quebra estimada por Larissa | TRANSCRICAO | `[09:46] Larissa` |
 | PRD-RISK-01 | docs/PRD.md | Risco | R1 — perder a Atlas por atraso (prob. Média / impacto Alto) | TRANSCRICAO | `[09:00] Marcos` |
@@ -329,17 +355,17 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 
 | ID | Documento | Tipo | Conteúdo (resumo) | Fonte | Localização |
 | --- | --- | --- | --- | --- | --- |
-| FDD-CONTRATO-01 | docs/FDD.md | Contrato | `POST /api/v1/webhooks` — cadastro com url, customer_id e lista de status | TRANSCRICAO | `[09:31] Marcos` |
+| FDD-CONTRATO-01 | docs/FDD.md | Contrato | **§6.1** — `POST /api/v1/webhooks` — cadastro com url, customer_id e lista de status | TRANSCRICAO | `[09:31] Marcos` |
 | FDD-CONTRATO-02 | docs/FDD.md | Contrato | Secret é gerada pela plataforma e devolvida na criação | TRANSCRICAO | `[09:31] Marcos` |
-| FDD-CONTRATO-03 | docs/FDD.md | Contrato | `GET /api/v1/webhooks` — listar webhooks de um customer | TRANSCRICAO | `[09:33] Bruno` |
-| FDD-CONTRATO-04 | docs/FDD.md | Contrato | `PATCH /api/v1/webhooks/:id` — editar | TRANSCRICAO | `[09:33] Bruno` |
-| FDD-CONTRATO-05 | docs/FDD.md | Contrato | `DELETE /api/v1/webhooks/:id` — remover | TRANSCRICAO | `[09:33] Bruno` |
-| FDD-CONTRATO-06 | docs/FDD.md | Contrato | `POST /api/v1/webhooks/:id/secret/rotate` — endpoint de rotação de secret | TRANSCRICAO | `[09:21] Sofia` |
-| FDD-CONTRATO-07 | docs/FDD.md | Contrato | `GET /api/v1/webhooks/:id/deliveries` — histórico de entregas | TRANSCRICAO | `[09:34] Marcos` |
-| FDD-CONTRATO-08 | docs/FDD.md | Contrato | `POST /api/v1/admin/webhooks/dead-letter/:id/replay` — replay administrativo | TRANSCRICAO | `[09:35] Diego` |
+| FDD-CONTRATO-03 | docs/FDD.md | Contrato | **§6.2** — `GET /api/v1/webhooks` — listar webhooks de um customer | TRANSCRICAO | `[09:33] Bruno` |
+| FDD-CONTRATO-04 | docs/FDD.md | Contrato | **§6.3** — `PATCH /api/v1/webhooks/:id` — editar | TRANSCRICAO | `[09:33] Bruno` |
+| FDD-CONTRATO-05 | docs/FDD.md | Contrato | **§6.4** — `DELETE /api/v1/webhooks/:id` — remover | TRANSCRICAO | `[09:33] Bruno` |
+| FDD-CONTRATO-06 | docs/FDD.md | Contrato | **§6.5** — `POST /api/v1/webhooks/:id/secret/rotate` — endpoint de rotação de secret | TRANSCRICAO | `[09:21] Sofia` |
+| FDD-CONTRATO-07 | docs/FDD.md | Contrato | **§6.6** — `GET /api/v1/webhooks/:id/deliveries` — histórico de entregas | TRANSCRICAO | `[09:34] Marcos` |
+| FDD-CONTRATO-08 | docs/FDD.md | Contrato | **§6.7** — `POST /api/v1/admin/webhooks/dead-letter/:id/replay` — replay administrativo | TRANSCRICAO | `[09:35] Diego` |
 | FDD-CONTRATO-09 | docs/FDD.md | Restrição | Replay exige role `ADMIN`, reaproveitando o `requireRole` existente | TRANSCRICAO | `[09:36] Larissa` |
 | FDD-CONTRATO-10 | docs/FDD.md | Restrição | CRUD de configuração pode ser feito por qualquer papel autenticado, por enquanto | TRANSCRICAO | `[09:37] Sofia` |
-| FDD-CONTRATO-11 | docs/FDD.md | Contrato | Payload outbound: event_id, event_type, timestamp, order_id, order_number, from/to_status, customer_id, total_cents | TRANSCRICAO | `[09:43] Diego` |
+| FDD-CONTRATO-11 | docs/FDD.md | Contrato | **§6.8** — Payload outbound: event_id, event_type, timestamp, order_id, order_number, from/to_status, customer_id, total_cents | TRANSCRICAO | `[09:43] Diego` |
 | FDD-CONTRATO-12 | docs/FDD.md | Restrição | `items` não vão no payload; cliente consulta `GET /orders/:id` se precisar | TRANSCRICAO | `[09:43] Diego` |
 | FDD-CONTRATO-13 | docs/FDD.md | Contrato | Header `X-Event-Id` com o UUID do evento | TRANSCRICAO | `[09:44] Diego` |
 | FDD-CONTRATO-14 | docs/FDD.md | Contrato | Header `X-Signature` com o HMAC | TRANSCRICAO | `[09:44] Diego` |
@@ -371,6 +397,7 @@ automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 | FDD-ERRO-08 | docs/FDD.md | Erro | `WEBHOOK_DEAD_LETTER_NOT_FOUND` — replay de id inexistente ⇢ derivado | TRANSCRICAO | `[09:35] Diego` |
 | FDD-ERRO-09 | docs/FDD.md | Erro | `WEBHOOK_ALREADY_REPLAYED` — replay de item já reprocessado ⇢ derivado | TRANSCRICAO | `[09:18] Diego` |
 | FDD-ERRO-10 | docs/FDD.md | Erro | `WEBHOOK_ROTATION_IN_PROGRESS` — proposta ligada à questão em aberto Q8 ⇢ derivado | TRANSCRICAO | `[09:21] Sofia` |
+| FDD-ERRO-10b | docs/FDD.md | Erro (worker) | `WEBHOOK_DELIVERY_CONNECTION_ERROR` — DNS, conexão recusada ou erro de TLS; o **nome** é derivado do prefixo `WEBHOOK_` ⇢ derivado | TRANSCRICAO | `[09:15] Diego` |
 | FDD-ERRO-11 | docs/FDD.md | Erro (worker) | `WEBHOOK_DELIVERY_TIMEOUT` — sem resposta em 10 s; o **nome** do código é derivado do prefixo `WEBHOOK_` ⇢ derivado | TRANSCRICAO | `[09:42] Diego` |
 | FDD-ERRO-12 | docs/FDD.md | Erro (worker) | `WEBHOOK_DELIVERY_FAILED` — resposta não-2xx; o **nome** do código é derivado do prefixo `WEBHOOK_` ⇢ derivado | TRANSCRICAO | `[09:15] Diego` |
 | FDD-ERRO-13 | docs/FDD.md | Erro (worker) | `WEBHOOK_RETRIES_EXHAUSTED` — 5ª retentativa falhou; o **nome** do código é derivado do prefixo `WEBHOOK_` ⇢ derivado | TRANSCRICAO | `[09:15] Diego` |
@@ -566,11 +593,12 @@ cobre **todos** eles.
 | FDD-RT-09 | Risco de evento travado em `PROCESSING` | `[09:11] Diego` (processo separado pode reiniciar) | Mesma origem de FDD-FLUXO-11, registrada como risco |
 | FDD-MODEL-17 | Coluna `secretRotatedAt` | `[09:21] Sofia` (rotação com grace de 24 h) | A reunião não falou em registrar quando a rotação ocorreu; `previousSecretExpiresAt` some quando a janela fecha |
 | FDD-FLUXO-21 | Linha de origem vira tombstone em vez de ser apagada | `[09:18] Diego` (DLQ em tabela separada) | A reunião decidiu para onde o evento morto vai, não o destino da linha na outbox; o tombstone preserva o histórico de entregas e o replay |
+| FDD-ERRO-10b | Nome `WEBHOOK_DELIVERY_CONNECTION_ERROR` | `[09:15] Diego` (falha de entrega entra em retry) + `[09:29] Larissa` (prefixo) | A regra foi decidida; o nome do código segue a convenção de prefixo |
 | FDD-ERRO-11 | Nome `WEBHOOK_DELIVERY_TIMEOUT` | `[09:42] Diego` (timeout de 10 s) + `[09:29] Larissa` (prefixo) | A regra foi decidida; o nome do código segue a convenção de prefixo |
 | FDD-ERRO-12 | Nome `WEBHOOK_DELIVERY_FAILED` | `[09:15] Diego` (falha entra em retry) + `[09:29] Larissa` | idem |
 | FDD-ERRO-13 | Nome `WEBHOOK_RETRIES_EXHAUSTED` | `[09:15] Diego` (teto de tentativas move para DLQ) + `[09:29] Larissa` | idem |
 | ADR-007-PRAZO | Replay sem prazo definido | `[09:18] Diego` (replay manual via endpoint admin) | A fala estabelece o mecanismo manual; a ausência de prazo é a consequência |
-| PRD-FR-13 | Efeito do estado inativo sobre eventos novos | `[09:21] Bruno` (coluna "estado ativo") | A fala sustenta a coluna; que endpoint inativo deixe de receber eventos é a consequência |
+| PRD-RF-13 | Efeito do estado inativo sobre eventos novos | `[09:21] Bruno` (coluna "estado ativo") | A fala sustenta a coluna; que endpoint inativo deixe de receber eventos é a consequência |
 
 ### Itens da reunião deliberadamente **não** registrados como requisito
 
@@ -590,15 +618,67 @@ Registrados aqui para deixar explícito que foram lidos e descartados, e não es
 | `customer_id` implícito no JWT | `[09:31] Marcos` | **Corrigido na própria reunião** por `[09:32] Bruno` e decidido por `[09:32] Larissa` → registrado como PRD-PERS-03, com a proposta original explicitamente descartada |
 | Endurecimento de papéis no CRUD | `[09:37] Sofia` | "Mais pra frente" → questão em aberto (RFC-QA-03) |
 
+
+### A conferência na direção contrária
+
+A tabela acima responde "de onde veio isto?" para cada linha dos documentos. Ela é cega para o
+problema oposto: um pacote pode ter cada frase perfeitamente ancorada e ainda assim ter ignorado
+metade da reunião. Esta seção percorre o caminho inverso — parte do que foi dito e pergunta onde foi
+parar.
+
+| O que a reunião produziu | Qtd. | Destino no pacote | Sem destino |
+| --- | --- | --- | --- |
+| Decisões principais | 6 | ADR-001 a ADR-006 | **0** |
+| Decisões secundárias fechadas (snapshot, UUID, filtro na inserção, timeout, payload, headers, `customer_id` fora do JWT, `publishWebhookEvent(tx)`) | 8 | ADR-007; FDD §4, §5.1, §6.8, §8.1, §10.2 | **0** |
+| Requisitos funcionais | 14 | PRD `RF-01`–`RF-14` | **0** |
+| Requisitos não funcionais e restrições | 16 | PRD `RNF-01`–`RNF-16` | **0** |
+| Alternativas levantadas e rejeitadas | 9 | RFC §4 — 5 com trade-off completo, 4 remetidas à ADR correspondente | **0** |
+| Coisas descartadas ou empurradas para depois | 8 | PRD §5.2 `F1`–`F8` | **0** |
+| Perguntas que a call não fechou | 5 | RFC `Q1`–`Q5` | **0** |
+| Ganchos com o código existente | 19 | FDD §10.1 | **0** |
+| Compromissos de pessoas e de prazo | 9 | PRD §9 `D1`–`D9` | **0** |
+| **Total** | **94** | | **0** |
+
+Ou seja: os 94 itens que a call gerou estão todos endereçados em algum documento.
+
+> **O que esta contagem é, e o que ela não é.** Sete das nove linhas saem direto de contagem
+> mecânica nos documentos (14 `RF`, 16 `RNF`, 8 `F`, 9 `D`, 5 `Q`, 9 alternativas, 19 ganchos em
+> §10.1). Duas — "decisões principais" e "decisões secundárias fechadas" — são **julgamento de
+> leitura**: o que conta como uma decisão fechada, e não como detalhe de uma decisão maior, foi
+> decidido por quem escreveu. As seis principais vêm nomeadas no próprio enunciado do desafio; as
+> oito secundárias estão listadas na linha correspondente para que qualquer pessoa possa discordar
+> do recorte olhando a lista, e não o número.
+
+Um segundo corte, agora por **fala** e não por item, mostra o mesmo de outro ângulo. A transcrição
+tem 151 turnos, que se reduzem a 128 pares distintos `[hh:mm] Nome`. Tirando saudações, "beleza",
+"concordo" e frases de transição de pauta, sobram 120 pares com conteúdo próprio — e **91 deles
+(75%) são citados** em algum documento. Os 29 que sobram caem todos em três baldes: pergunta cuja
+resposta está citada (Marcos pergunta o formato do payload em `[09:43]` e a resposta de Diego, no
+mesmo minuto, está no FDD), concordância com o que outra pessoa acabou de dizer, e mudança de
+assunto. Nenhum deles carrega informação que não tenha entrado no pacote por outra via.
+
+### Onde este tracker fica em relação ao que o desafio pede
+
+| O desafio pede | Estado |
+| --- | --- |
+| Colunas `ID · Documento · Tipo · Conteúdo (resumo) · Fonte · Localização` | Presentes nas 22 subtabelas, sem variação |
+| Cobrir ≥ 80% dos itens identificáveis | 122 de 122 — o divisor está declarado no topo deste arquivo |
+| ≥ 70% das linhas com `TRANSCRICAO` e timestamp `[hh:mm] Nome` | 302 de 373, ou 80% |
+| ≥ 5 linhas com `CODIGO` e caminho real | 71 linhas, apontando 26 arquivos distintos |
+| Timestamps que existam mesmo na transcrição | 82 pares distintos, todos conferidos por script |
+| Caminhos de arquivo que existam mesmo | 45 conferidos; `src/worker.ts` e `src/modules/webhooks/` aparecem sempre rotulados como arquivos a criar |
+| Nada registrado sem origem identificável | 32 itens não vêm de citação direta. Cada um leva o marcador `⇢ derivado`, a decisão de onde decorre e o motivo, em [Itens derivados](#itens-derivados). Nenhum se apresenta como fala de alguém |
+| Nada que contradiga a transcrição ou o código | Duas rodadas de auditoria adversarial; o que apareceu foi consertado no documento, e o histórico está no [README](../README.md#iterações-e-ajustes) |
+
 ### Cobertura
 
 Números conferidos automaticamente por [`scripts/validate-docs.sh`](../scripts/validate-docs.sh).
 
 | Métrica | Valor | Exigência do desafio |
 | --- | --- | --- |
-| Linhas de rastreabilidade | **372** | — |
-| Fonte = `TRANSCRICAO` | **301** (80%) | ≥ 70% |
+| Linhas de rastreabilidade | **373** | — |
+| Fonte = `TRANSCRICAO` | **302** (80%) | ≥ 70% |
 | Fonte = `CODIGO` | **71** (19%) | ≥ 5 linhas |
 | Linhas sem *Localização* | **0** | — |
-| Itens marcados `⇢ derivado` | **31** — todos listados em [Itens derivados](#itens-derivados) | — |
+| Itens marcados `⇢ derivado` | **32** — todos listados em [Itens derivados](#itens-derivados) | — |
 | Pares `[hh:mm] Nome` existentes na transcrição | **82 de 82** — existência verificada por script; **fidelidade do conteúdo verificada por leitura**, não pelo script | — |

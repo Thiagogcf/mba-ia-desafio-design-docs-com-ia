@@ -60,6 +60,49 @@ else
   ok "$EXISTENTES caminhos de arquivos existentes conferem"
 fi
 
+# ------------------------------------------------- 3b. cobertura dos itens rotulados
+cobertura_itens() {
+python3 - <<'PYEOF'
+import re, pathlib, sys
+tracker = pathlib.Path('docs/TRACKER.md').read_text()
+padroes = {
+ 'docs/PRD.md': [r'^\| \*\*(O\d)\*\*', r'^\| (E\d) \|', r'^\| \*\*(F\d)\*\*',
+                 r'^\| \*\*(RF-\d+)\*\*', r'^\| \*\*(RNF-\d+)\*\*', r'^\| (D\d) \|',
+                 r'^\| \*\*(R\d)\*\*'],
+ 'docs/RFC.md': [r'^\*\*(Q\d) —'],
+ 'docs/FDD.md': [r'^\| (OT-\d) \|', r'^\| (RT-\d+) \|', r'^\| `(WEBHOOK_[A-Z_]+)`',
+                 r'^### (6\.\d+) '],
+}
+itens = []
+for f, pats in padroes.items():
+    txt = pathlib.Path(f).read_text()
+    for pat in pats:
+        itens += [(f, m) for m in re.findall(pat, txt, re.M)]
+itens += [(f'docs/adrs/{q.name}', q.name[:7]) for q in sorted(pathlib.Path('docs/adrs').glob('ADR-*.md'))]
+
+def achou(rot):
+    alvo = '§' + rot if re.match(r'^6\.\d', rot) else rot
+    return re.search(re.escape(alvo), tracker) is not None
+
+orf = [i for i in itens if not achou(i[1])]
+pct = (len(itens) - len(orf)) * 100 // len(itens) if itens else 0
+print(f'TOTAL={len(itens)} COBERTOS={len(itens)-len(orf)} PCT={pct}')
+for f, r in orf:
+    print(f'ORFAO={f}:{r}')
+PYEOF
+}
+head_ "3b. Cobertura dos itens rotulados dos documentos"
+if command -v python3 >/dev/null 2>&1; then
+  COB=$(cobertura_itens)
+  CPCT=$(echo "$COB" | grep '^TOTAL=' | sed 's/.*PCT=//')
+  CTOT=$(echo "$COB" | grep '^TOTAL=' | sed 's/TOTAL=\([0-9]*\).*/\1/')
+  echo "$COB" | grep '^ORFAO=' | sed 's/^ORFAO=//' | while read -r l; do bad "item rotulado sem linha no tracker: $l"; done
+  if [ "${CPCT:-0}" -ge 80 ]; then ok "$CTOT itens rotulados, cobertura ${CPCT}% (exigido >= 80%)"; else bad "cobertura de itens rotulados: ${CPCT}% (exigido >= 80%)"; fi
+  echo "$COB" | grep -q '^ORFAO=' && FAIL=1
+else
+  echo "     (python3 ausente — verificação pulada)"
+fi
+
 # ------------------------------------------------------------------ 3. tracker
 head_ "3. Cobertura do TRACKER.md"
 LINHAS=$(grep -E '^\| (PRD|RFC|FDD|ADR)-' docs/TRACKER.md | grep -cE '\| (TRANSCRICAO|CODIGO) \|')

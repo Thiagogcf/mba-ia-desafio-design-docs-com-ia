@@ -95,7 +95,7 @@ frases genéricas saíram dos documentos.
 **Marcar o derivado como derivado.** Alguns itens são consequência necessária de uma decisão, sem
 serem citação literal — por exemplo, a regra de destravar eventos presos em `PROCESSING` após um
 crash. Em vez de fingir que estavam na transcrição ou de descartá-los, marquei cada um com `⇢
-derivado` no tracker, apontando para a decisão-mãe. São **31 itens**, todos listados em
+derivado` no tracker, apontando para a decisão-mãe. São **32 itens**, todos listados em
 [Itens derivados](./docs/TRACKER.md#itens-derivados) — e o script de validação falha se a contagem
 de marcadores divergir da tabela de notas, para a lista não envelhecer em silêncio.
 
@@ -336,7 +336,7 @@ excluído da query — o que de quebra resolve o duplo sentido de `FAILED` ("agu
 
 **A contagem que o próprio pacote vendia sobre si.** O tracker afirmava "São 9 itens derivados, todos
 listados". Eram 16 marcados, a tabela cobria 13, e três nunca apareciam. Isso atinge exatamente a
-garantia que o documento existe para dar. Reescrevi a tabela com todos (hoje 31, depois das outras
+garantia que o documento existe para dar. Reescrevi a tabela com todos (hoje 32, depois das outras
 correções) e **acrescentei ao script uma checagem que compara a contagem de marcadores com a de
 linhas da tabela** — o erro não pode voltar em silêncio.
 
@@ -442,11 +442,14 @@ $ bash scripts/validate-docs.sh
 2. Caminhos de arquivo citados
   ✓ 45 caminhos de arquivos existentes conferem
 
+3b. Cobertura dos itens rotulados dos documentos
+  ✓ 122 itens rotulados, cobertura 100% (exigido >= 80%)
+
 3. Cobertura do TRACKER.md
-     linhas: 372 | TRANSCRICAO: 301 (80%) | CODIGO: 71
+     linhas: 373 | TRANSCRICAO: 302 (80%) | CODIGO: 71
   ✓ TRANSCRICAO >= 70% (80%)
   ✓ CODIGO >= 5 linhas (71)
-  ✓ itens ⇢ derivado: 31 marcados = 31 documentados nas notas
+  ✓ itens ⇢ derivado: 32 marcados = 32 documentados nas notas
      (7 marcadores ⇢ derivado nos documentos, fora do tracker — cada um deve ter linha no tracker)
   ✓ nenhuma linha com Localização vazia
 
@@ -464,9 +467,10 @@ $ bash scripts/validate-docs.sh
   ✓ nenhum item descartado na reunião virou requisito funcional
 
 6. Links e âncoras internas entre os documentos
-  ✓ 210 links internos resolvem (arquivo + âncora)
+  ✗ README.md: ancora inexistente -> ./docs/TRACKER.md#regra-de-contagem-e-denominador
+  ✗ README.md: ancora inexistente -> ./docs/TRACKER.md#varredura-reversa--o-que-a-reunião-produziu-e-onde-foi-parar
 
-VALIDAÇÃO OK
+VALIDAÇÃO FALHOU
 ```
 
 O que o script **não** prova, e por isso a iteração 6 existiu: ele confere que o par
@@ -485,7 +489,7 @@ conteúdo só sai com leitura.
 │   ├── PRD.md                       problema, escopo, requisitos, métricas, riscos
 │   ├── RFC.md                       proposta técnica, alternativas, questões em aberto
 │   ├── FDD.md                       contratos, fluxos, erros, integração com o código
-│   ├── TRACKER.md                   rastreabilidade item a item (372 linhas)
+│   ├── TRACKER.md                   rastreabilidade item a item (373 linhas, cobertura 100%)
 │   ├── ENUNCIADO.md                 enunciado original do desafio
 │   └── adrs/
 │       ├── README.md                índice das decisões
@@ -509,7 +513,7 @@ conteúdo só sai com leitura.
 | 2 | [`docs/RFC.md`](./docs/RFC.md) | A proposta técnica em nível de arquitetura, com as alternativas descartadas e as 8 questões ainda em aberto |
 | 3 | [`docs/adrs/`](./docs/adrs/) | Comece pela [ADR-001](./docs/adrs/ADR-001-outbox-no-mysql.md), que é a decisão da qual todas as outras dependem. O [índice](./docs/adrs/README.md) mostra o mapa |
 | 4 | [`docs/FDD.md`](./docs/FDD.md) | O detalhe de implementação. Se você é a pessoa que vai codar, comece pela [§10, Integração com o sistema existente](./docs/FDD.md#10-integração-com-o-sistema-existente) |
-| 5 | [`docs/TRACKER.md`](./docs/TRACKER.md) | Consulte quando quiser saber de onde veio qualquer item. As [notas de rastreabilidade](./docs/TRACKER.md#notas-de-rastreabilidade) explicam os 31 itens derivados e o que foi deliberadamente descartado |
+| 5 | [`docs/TRACKER.md`](./docs/TRACKER.md) | Consulte quando quiser saber de onde veio qualquer item. O [denominador](./docs/TRACKER.md#o-denominador-o-que-este-tracker-trata-como-item) está declarado antes da contagem, e a [conferência na direção contrária](./docs/TRACKER.md#a-conferência-na-direção-contrária) parte da reunião e pergunta onde cada item foi parar. As [notas de rastreabilidade](./docs/TRACKER.md#notas-de-rastreabilidade) explicam os 32 itens derivados e o que foi deliberadamente descartado |
 
 ### Atalhos por interesse
 
